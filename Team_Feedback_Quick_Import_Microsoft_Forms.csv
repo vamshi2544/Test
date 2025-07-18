@@ -1,0 +1,15 @@
+Question,Question Type,Options
+How confident do you feel about your understanding of the overall business flow?,Multiple choice,"Very confident; Somewhat confident; I know the basics, but want to understand more; I’m unclear about the business flow; Other"
+Would you like more sessions or documents explaining the end-to-end flow?,Multiple choice,Yes – walkthroughs would help; Maybe – depends on topic; No – I’m comfortable; Other
+Do you feel comfortable speaking up in meetings?,Multiple choice,"Yes, always; Sometimes; No – I prefer 1:1 or async; No – I feel shy/hesitant; Other"
+What holds you back from speaking more (if anything)?,Checkboxes,Language/communication barrier; Unclear agenda; Too many people; I don’t find them useful; I feel my opinion may not matter; Nothing — I’m good; Other
+How manageable is your workload?,Multiple choice,Just right; A bit too much; Too light — I can take more; Sometimes overwhelming; Other
+Are timelines realistic for the tasks you get?,Multiple choice,"Yes; Mostly, but occasional crunch; Often tight; No – too aggressive; Other"
+Do you feel your work is valued and recognized?,Multiple choice,Yes; Sometimes; Not really; I’m not sure; Other
+Do you feel connected to the team and involved in key conversations?,Multiple choice,Yes; Partially; Not really; Other
+Are you getting tasks that help you grow?,Multiple choice,Yes; Sometimes – would like more variety; No – would prefer different work; Not sure yet; Other
+Do you want to explore more responsibility or new areas?,Multiple choice,Yes – ready for more ownership; Maybe; Not now; Other
+Are meeting timings and hours working for you?,Multiple choice,Yes; Mostly okay; No – I struggle with current timings; Other
+Which meetings do you find most valuable?,Checkboxes,Daily Stand-ups; Groomings; Retrospectives; Tech Design Discussions; Knowledge Sharing; None – most feel repetitive; Other
+"If there’s one thing you could change or improve, what would it be?",Text,
+"Any other thoughts, suggestions, or concerns?",Text,

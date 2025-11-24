@@ -29,3 +29,61 @@ index="syf_pcf_np" "281b1de-91fb-4b37-8b1b-bb651229ff0c" cf_app_name!="SynApps-C
     1=1, 9
 )
 | table step start_time lane cf_app_name duration_ms statuses
+
+
+
+
+
+
+
+
+index="syf_pcf_np" "281b1de-91fb-4b37-8b1b-bb651229ff0c" cf_app_name!="SynApps-Core-UAT" cf_app_name!="gateway-api-crypto"
+| spath
+| eval status = case(
+    msg.logLevel="ERROR" OR like(msg.message,"%Exception%"), "ERROR",
+    1=1, "OK"
+)
+| sort 0 msg.TransactionID _time
+| streamstats last(cf_app_name) AS prev_app window=1 BY msg.TransactionID
+| eval step_change = if(isnull(prev_app) OR cf_app_name!=prev_app, 1, 0)
+| streamstats sum(step_change) AS step BY msg.TransactionID
+| stats
+    earliest(_time) AS start_time
+    latest(_time)   AS end_time
+    values(status)  AS statuses
+    values(msg.requestUri) AS uris
+    values(msg.message) AS messages
+  BY msg.TransactionID step cf_app_name
+| eval duration_ms = round((end_time - start_time)*1000, 1)
+| sort step
+| table step cf_app_name start_time end_time duration_ms statuses uris
+
+
+index="syf_pcf_np" "281b1de-91fb-4b37-8b1b-bb651229ff0c" cf_app_name!="SynApps-Core-UAT" cf_app_name!="gateway-api-crypto"
+
+
+index="syf_pcf_np" "281b1de-91fb-4b37-8b1b-bb651229ff0c" cf_app_name!="SynApps-Core-UAT" cf_app_name!="gateway-api-crypto"
+| spath
+| eval status = case(
+    msg.logLevel="ERROR" OR like(msg.message,"%Exception%"), "ERROR",
+    1=1, "OK"
+)
+| sort 0 msg.TransactionID _time
+| table _time msg.TransactionID cf_app_name status msg.requestUri msg.message
+
+
+
+| streamstats last(cf_app_name) AS prev_app window=1 BY msg.TransactionID
+| eval step_change = if(isnull(prev_app) OR cf_app_name!=prev_app, 1, 0)
+| streamstats sum(step_change) AS step BY msg.TransactionID
+| stats
+    earliest(_time) AS start_time
+    latest(_time)   AS end_time
+    values(status)  AS statuses
+    values(msg.requestUri) AS uris
+    values(msg.message) AS messages
+  BY msg.TransactionID step cf_app_name
+| eval duration_ms = round((end_time - start_time)*1000, 1)
+| sort step
+| table step cf_app_name start_time end_time duration_ms statuses uris
+

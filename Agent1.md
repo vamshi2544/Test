@@ -275,3 +275,90 @@ After you generate the code, run this local test
 	•	mvn spring-boot:run
 
 	2.	Call endpoint:
+
+
+	
+
+
+1) Copilot prompt to fix the mismatch (deploy vs business error)
+
+Prompt A — Add classification + don’t treat 4xx as deployment issues
+
+Paste this into Copilot Chat (Ask/Edit) with project context:
+
+@project Update the log analysis engine so error clusters are classified into categories: DEPLOYMENT, PLATFORM_RUNTIME, DOWNSTREAM_RUNTIME, BUSINESS_4XX, UNKNOWN.
+Rules:
+	•	If signature/message contains httpStatusCode 400–499 OR “Bad Request” OR “Invalid” AND NOT 500/timeout/exception keywords, classify as BUSINESS_4XX.
+	•	If signature/message contains deploy markers (staging, cf push, downloading droplet, starting app, “Started … in … seconds”, “Tomcat started on port”, “listening on port”), classify as DEPLOYMENT.
+	•	If contains gorouter or 502/503/504, classify as PLATFORM_RUNTIME.
+	•	If contains HikariPool/SQL/Connection refused/UnknownHost/timeout to DB or service, classify as DOWNSTREAM_RUNTIME.
+	•	Otherwise UNKNOWN.
+Modify AnalysisResult and Markdown report: For deployment reports, highlight DEPLOYMENT/PLATFORM_RUNTIME/DOWNSTREAM_RUNTIME clusters first; show BUSINESS_4XX under a separate section “Client/Validation errors (not deployment health)” and do not count them as deployment failure.
+
+This will make your output match expectations: 400s show up, but don’t “look like deploy issues”.
+
+⸻
+
+2) Copilot prompt to improve normalization (trackingId/UUID masking)
+
+Your screenshot shows the signature still includes a real trackingId UUID. That will break clustering.
+
+@project Improve SignatureNormalizer (and/or Redactor) to mask dynamic IDs inside JSON strings, especially trackingId and UUIDs.
+Replace any UUID pattern with . Replace "trackingId":"<UUID>" or trackingId":"<UUID>" variants. Also mask long numeric IDs (>=8 digits) as . Ensure the normalized signature for repeated errors becomes identical across occurrences. Add a unit test with two lines differing only in trackingId and assert the normalized signature is equal.
+
+⸻
+
+3) Copilot prompt to improve deploy detection markers (PCF + Spring Boot)
+
+Right now deployDetected is false because your file didn’t have deploy markers — but also your marker list should be richer.
+
+@project Expand deployment marker detection to work with common Spring Boot + PCF logs. Add markers for:
+	•	“Started .* in .* seconds”
+	•	“Tomcat started on port(s):”
+	•	“Netty started on port”
+	•	“JVM running for”
+	•	“Uploading droplet”, “Downloading droplet”, “Staging”, “Staging failed”, “Starting app instance”
+Treat any of these with timestamps as deployment markers. If at least 2 markers exist within 30 minutes, set deployDetected=true and windowStart=min(markerTs), windowEnd=max(markerTs). Add a unit test with sample lines to verify deployDetected and window calculation.
+
+⸻
+
+4) Should you test the other endpoint?
+
+Yes — but understand what it does today.
+
+What to test now
+	1.	Deployment endpoint (file upload) — this is your main path now
+
+	•	Upload a log file that includes deploy markers + some errors.
+
+	2.	Monitoring endpoint — test only to ensure wiring is correct
+
+	•	It likely reads a sample file and returns a report.
+	•	Today it won’t “monitor 40 apps” yet, but it confirms:
+	•	scheduler/service wiring
+	•	report generation works
+
+Copilot prompt to make monitoring endpoint useful for now
+
+@project Update MonitoringController / MonitoringService so POST /api/monitoring/run-now supports two modes:
+	•	If a multipart file is provided, analyze it (same as deployment analyze)
+	•	If no file is provided, analyze the built-in sample log resource
+Response should include appName (optional request param), a short summary (top 3 clusters), and markdown report.
+
+⸻
+
+5) What you should test next (so you see “deployment agent” behavior)
+
+Create a small log file with these lines (even fake is fine):
+	•	cf push/staging markers
+	•	Spring “Started … in … seconds”
+	•	then one OOM or DB connection issue
+	•	and maybe a 503 from gorouter
+
+When you upload that file, you should see:
+	•	deployDetected: true
+	•	a deploy window
+	•	root causes matched (OOM/Hikari/503)
+	•	4xx errors separated as “client/validation”
+
+

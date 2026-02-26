@@ -1,3 +1,78 @@
+
+observability-agent/
+  pom.xml
+  README.md
+  src/main/java/com/company/obsagent/
+    ObservabilityAgentApplication.java
+
+    config/
+      AppConfigProperties.java
+      SchedulerConfig.java
+
+    api/
+      DeploymentAnalysisController.java
+      MonitoringController.java
+      dto/
+        AnalyzeFileRequest.java
+        AnalyzeFileResponse.java
+        MonitoringRunResponse.java
+
+    core/
+      model/
+        LogEvent.java
+        ErrorCluster.java
+        RunbookRule.java
+        RunbookMatch.java
+        AnalysisResult.java
+        RootCause.java
+
+      parsing/
+        TimestampParser.java
+        LogParser.java
+
+      clustering/
+        ErrorSignalDetector.java
+        SignatureNormalizer.java
+        ErrorClusterer.java
+
+      runbook/
+        RunbookLoader.java
+        RunbookMatcher.java
+
+      reporting/
+        MarkdownReportWriter.java
+
+      service/
+        DeploymentAnalysisService.java
+        MonitoringService.java
+
+      util/
+        Redactor.java
+        FileUtils.java
+
+    integrations/              <-- empty stubs now, filled later
+      splunk/
+        SplunkClient.java
+        SplunkQueryTemplates.java
+      pcf/
+        PcfClient.java
+      newrelic/
+        NewRelicClient.java
+
+  src/main/resources/
+    application.yml
+    runbooks/
+      pcf_java_common.yml
+    samples/
+      logs.txt
+
+  src/test/java/com/company/obsagent/
+    parsing/
+      LogParserTest.java
+    clustering/
+      ErrorClustererTest.java
+
+
 End-to-end behavior (file-first)
 
 Endpoint 1: Deployment Agent (File)

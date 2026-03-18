@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI — Reference Architecture</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+[data-theme="dark"] {
+  --bg:#0d0f14; --bg2:#13161e; --bg3:#1a1e2a; --border:#252a38; --border2:#2e3447;
+  --text:#dde1ed; --text2:#8a91a8; --text3:#555e78; --shadow:rgba(0,0,0,0.5); --glow:rgba(99,179,237,0.10);
+  --c1:#63b3ed; --c2:#f6ad55; --c3:#b794f4; --c4:#68d391; --c5:#fc8181; --c6:#76e4f7; --c7:#f687b3; --c8:#fbd38d;
+}
+[data-theme="light"] {
+  --bg:#f2f4f8; --bg2:#ffffff; --bg3:#e8ebf4; --border:#d0d5e8; --border2:#bec5d8;
+  --text:#1a1f30; --text2:#5a6180; --text3:#9aa0b8; --shadow:rgba(0,0,0,0.07); --glow:rgba(99,130,220,0.07);
+  --c1:#2563eb; --c2:#d97706; --c3:#7c3aed; --c4:#16a34a; --c5:#dc2626; --c6:#0891b2; --c7:#db2777; --c8:#b45309;
+}
+[data-theme="warm"] {
+  --bg:#1b1310; --bg2:#231912; --bg3:#2d2018; --border:#3c2d21; --border2:#4c3929;
+  --text:#f0e6d8; --text2:#9c8570; --text3:#5c4a38; --shadow:rgba(0,0,0,0.5); --glow:rgba(246,173,85,0.09);
+  --c1:#f6ad55; --c2:#fc8181; --c3:#b794f4; --c4:#68d391; --c5:#63b3ed; --c6:#fbd38d; --c7:#f687b3; --c8:#76e4f7;
+}
+[data-theme="slate"] {
+  --bg:#0e1019; --bg2:#151b28; --bg3:#1d2436; --border:#283148; --border2:#334060;
+  --text:#e2e8f8; --text2:#7a8aaa; --text3:#445070; --shadow:rgba(0,0,0,0.6); --glow:rgba(104,211,145,0.09);
+  --c1:#68d391; --c2:#63b3ed; --c3:#b794f4; --c4:#f6ad55; --c5:#fc8181; --c6:#76e4f7; --c7:#f687b3; --c8:#fbd38d;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;line-height:1.5;transition:background .3s,color .3s;}
+
+/* TOPBAR */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);background:var(--bg2);position:sticky;top:0;z-index:100;gap:16px;flex-wrap:wrap;}
+.topbar-title{font-size:14px;font-weight:700;letter-spacing:-.3px;}
+.topbar-sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);letter-spacing:1px;margin-top:2px;}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.theme-sw{display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px;}
+.tbtn{width:26px;height:26px;border-radius:4px;border:2px solid transparent;cursor:pointer;transition:all .15s;}
+.tbtn:hover{transform:scale(1.1);}
+.tbtn.active{border-color:var(--c1);}
+.tbtn[data-t="dark"] {background:linear-gradient(135deg,#0d0f14 50%,#63b3ed 50%);}
+.tbtn[data-t="light"]{background:linear-gradient(135deg,#f2f4f8 50%,#2563eb 50%);}
+.tbtn[data-t="warm"] {background:linear-gradient(135deg,#1b1310 50%,#f6ad55 50%);}
+.tbtn[data-t="slate"]{background:linear-gradient(135deg,#0e1019 50%,#68d391 50%);}
+.dl-btn{display:flex;align-items:center;gap:6px;padding:7px 16px;background:var(--c1);color:var(--bg);font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;border:none;border-radius:5px;cursor:pointer;transition:opacity .2s;text-transform:uppercase;}
+.dl-btn:hover{opacity:.85;}
+
+/* WRAP */
+.wrap{max-width:1300px;margin:0 auto;padding:0 28px 100px;}
+
+/* HEADER */
+header{padding:52px 0 40px;border-bottom:1px solid var(--border);}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--c1);letter-spacing:3px;text-transform:uppercase;margin-bottom:14px;}
+header h1{font-size:clamp(28px,5vw,52px);font-weight:700;letter-spacing:-1.5px;line-height:1.05;}
+header h1 em{font-style:normal;color:var(--c1);}
+.h-desc{margin-top:14px;font-size:15px;color:var(--text2);max-width:580px;line-height:1.7;}
+
+/* SECTION */
+.section{margin-top:56px;}
+.sec-hd{display:flex;align-items:baseline;gap:14px;margin-bottom:20px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.sec-hd h2{font-size:17px;font-weight:700;letter-spacing:-.3px;}
+.sec-hd span{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;}
+
+/* ARCH */
+.arch{display:flex;flex-direction:column;gap:3px;}
+.arch-layer{display:flex;align-items:stretch;gap:3px;}
+.arch-lbl{writing-mode:vertical-rl;transform:rotate(180deg);width:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;}
+.arch-row{flex:1;display:flex;gap:3px;flex-wrap:wrap;}
+.arch-arr{display:flex;align-items:center;padding:5px 32px;gap:10px;}
+.arr-line{flex:1;height:1px;background:var(--border);}
+.arr-txt{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);white-space:nowrap;}
+
+/* CARD */
+.card{flex:1;min-width:155px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;cursor:pointer;transition:border-color .2s,box-shadow .2s,transform .15s;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--card-c,var(--c1));border-radius:8px 8px 0 0;}
+.card::after{content:'';position:absolute;inset:0;background:var(--glow);opacity:0;transition:opacity .2s;pointer-events:none;}
+.card:hover::after,.card.active::after{opacity:1;}
+.card:hover,.card.active{border-color:var(--card-c,var(--c1));box-shadow:0 0 0 1px var(--card-c,var(--c1)),0 8px 28px var(--shadow);transform:translateY(-1px);}
+.card-name{font-size:13px;font-weight:600;margin-bottom:5px;letter-spacing:-.2px;}
+.card-desc{font-size:11px;color:var(--text2);line-height:1.55;font-family:'IBM Plex Mono',monospace;}
+.card-chips{margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;}
+.chip{font-size:9px;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:3px;border:1px solid var(--border2);color:var(--text3);background:var(--bg3);}
+
+/* DETAIL */
+.detail{margin-top:8px;background:var(--bg2);border:1px solid var(--border2);border-left:3px solid var(--c1);border-radius:8px;padding:22px 24px;display:none;animation:sIn .18s ease;}
+.detail.open{display:block;}
+@keyframes sIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.d-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.d-meta{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text2);margin-bottom:18px;}
+.d-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;}
+.d-col h4{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--c1);letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+.d-col p{font-size:13px;color:var(--text);line-height:1.65;}
+.d-col ul{padding-left:14px;}
+.d-col li{font-size:12px;color:var(--text2);line-height:1.9;font-family:'IBM Plex Mono',monospace;}
+
+/* PATTERNS */
+.pat-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pat-tab{padding:6px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text2);cursor:pointer;transition:all .15s;}
+.pat-tab:hover,.pat-tab.active{border-color:var(--c3);color:var(--c3);background:var(--bg3);}
+.pat-view{display:none;}
+.pat-view.active{display:block;}
+.pat-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:24px;}
+.pat-box h3{font-size:15px;font-weight:700;color:var(--c3);margin-bottom:6px;}
+.pat-desc{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;font-family:'IBM Plex Mono',monospace;}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;}
+.fn{padding:7px 14px;border-radius:5px;font-size:11px;font-family:'IBM Plex Mono',monospace;border:1px solid;white-space:nowrap;}
+.fa{color:var(--text3);font-size:16px;}
+.fn-u{border-color:var(--c1);color:var(--c1);background:color-mix(in srgb,var(--c1) 8%,transparent);}
+.fn-o{border-color:var(--c3);color:var(--c3);background:color-mix(in srgb,var(--c3) 8%,transparent);}
+.fn-a{border-color:var(--c2);color:var(--c2);background:color-mix(in srgb,var(--c2) 8%,transparent);}
+.fn-t{border-color:var(--c4);color:var(--c4);background:color-mix(in srgb,var(--c4) 8%,transparent);}
+.fn-l{border-color:var(--c6);color:var(--c6);background:color-mix(in srgb,var(--c6) 8%,transparent);}
+.pat-fw{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text3);margin-top:14px;}
+
+/* ROADMAP */
+.roadmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:3px;}
+.rm-card{background:var(--bg2);border:1px solid var(--border);padding:22px;position:relative;overflow:hidden;transition:border-color .2s;border-radius:2px;}
+.rm-card:hover{border-color:var(--border2);}
+.rm-acc{position:absolute;top:0;left:0;width:3px;height:100%;background:var(--lc,var(--border));}
+.rm-lvl{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--lc);text-transform:uppercase;margin-bottom:8px;}
+.rm-card h4{font-size:15px;font-weight:700;margin-bottom:5px;letter-spacing:-.2px;}
+.rm-desc{font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5;}
+.rm-topics{list-style:none;}
+.rm-topics li{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--text2);padding:4px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;line-height:1.45;}
+.rm-topics li::before{content:'·';color:var(--lc,var(--text3));flex-shrink:0;margin-top:1px;}
+.rm-pre{display:inline-block;margin-top:13px;font-size:9px;font-family:'IBM Plex Mono',monospace;padding:3px 9px;border-radius:3px;border:1px solid var(--border2);color:var(--text3);}
+
+/* GROUP LABEL */
+.group-label{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--text3);text-transform:uppercase;margin:28px 0 10px;padding-left:4px;border-left:2px solid var(--border2);}
+
+/* RESOURCES */
+.res-section { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.res-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; margin-bottom: 8px; }
+.res-list { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.res-list li a {
+  display: flex; align-items: flex-start; gap: 6px;
+  font-size: 11px; font-family: 'IBM Plex Mono', monospace;
+  color: var(--text2); text-decoration: none;
+  padding: 4px 6px; border-radius: 4px;
+  border: 1px solid transparent;
+  transition: all .15s; line-height: 1.4;
+}
+.res-list li a:hover { background: var(--bg3); border-color: var(--border); color: var(--c1); }
+.res-type { flex-shrink: 0; font-size: 10px; opacity: .7; }
+
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">Agentic AI & Multi-Agent Systems</div>
+    <div class="topbar-sub">// Private Resources Guide · v2.0</div>
+  </div>
+  <div class="topbar-right">
+    <div class="theme-sw">
+      <button class="tbtn active" data-t="dark"  onclick="setTheme('dark',this)"  title="Dark"></button>
+      <button class="tbtn"        data-t="light" onclick="setTheme('light',this)" title="Light"></button>
+      <button class="tbtn"        data-t="warm"  onclick="setTheme('warm',this)"  title="Warm"></button>
+      <button class="tbtn"        data-t="slate" onclick="setTheme('slate',this)" title="Slate"></button>
+    </div>
+    <button class="dl-btn" onclick="dlPage()">↓ Download</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Reference Architecture</div>
+  <h1>Agentic AI &amp;<br><em>Multi-Agent Systems</em></h1>
+  <p class="h-desc">A complete map of every component, concept, and pattern involved in building production-grade AI agent systems — from fundamentals to deployment.</p>
+</header>
+
+<!-- ══════════════════════════════════════
+     SECTION 1 — CORE ARCHITECTURE
+══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-hd"><h2>Core Architecture</h2><span>CLICK ANY COMPONENT FOR DETAILS</span></div>
+
+  <div class="arch">
+
+    <!-- TRIGGER -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Trigger</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c1)" onclick="tog('user')">
+          <div class="card-name">User / External Trigger</div>
+          <div class="card-desc">Chat · REST API · Webhook · Cron · Event stream</div>
+          <div class="card-chips"><span class="chip">HTTP</span><span class="chip">WebSocket</span><span class="chip">Kafka</span><span class="chip">Cron</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-user">
+      <div class="d-title">User / External Trigger</div>
+      <div class="d-meta">Layer: Input · Analogy: REST client calling your API gateway</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it is</h4><p>The entry point. Provides the goal or task in natural language or structured form.</p></div>
+        <div class="d-col"><h4>Trigger types</h4><ul><li>Chat / UI frontend</li><li>REST API call from a service</li><li>Webhook from external system</li><li>Scheduled cron job</li><li>Kafka / RabbitMQ event</li></ul></div>
+        <div class="d-col"><h4>Your parallel</h4><p>Same as a REST client calling your Spring Boot API — except instead of a JSON payload, it sends a natural language goal.</p></div>
+      </div>
+    </div>
+
+    <div class="arch-arr"><div class="arr-line"></div><div class="arr-txt">↓ goal / task input</div><div class="arr-line"></div></div>
+
+    <!-- ORCHESTRATOR -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Orchestrator</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c3)" onclick="tog('orch')">
+          <div class="card-name">Orchestrator / Planner</div>
+          <div class="card-desc">Receives goal → decomposes → routes to agents → synthesizes output</div>
+          <div class="card-chips"><span class="chip">LangGraph</span><span class="chip">CrewAI</span><span class="chip">AutoGen</span><span class="chip">n8n</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c3)" onclick="tog('llm')">
+          <div class="card-name">LLM Brain</div>
+          <div class="card-desc">The reasoning engine — IS the intelligence behind every agent decision</div>
+          <div class="card-chips"><span class="chip">GPT-4o</span><span class="chip">Claude 3.5</span><span class="chip">Gemini</span><span class="chip">LLaMA 3</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c3)" onclick="tog('prompt')">
+          <div class="card-name">Prompt / Context Manager</div>
+          <div class="card-desc">Assembles final prompt from memory + retrieved docs + system instructions + user input</div>
+          <div class="card-chips"><span class="chip">LangChain</span><span class="chip">Custom</span><span class="chip">PromptTemplate</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-orch">
+      <div class="d-title">Orchestrator / Planner</div>
+      <div class="d-meta">Layer: Control · Analogy: API Gateway + BPM workflow engine</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it does</h4><p>Receives the high-level goal, breaks it into subtasks, decides which agent handles what, and stitches the final output together.</p></div>
+        <div class="d-col"><h4>Responsibilities</h4><ul><li>Task decomposition into steps</li><li>Agent selection and routing</li><li>Result aggregation</li><li>Error handling and retries</li><li>Loop control — when to stop</li></ul></div>
+        <div class="d-col"><h4>Frameworks</h4><p>LangGraph (complex conditional flows), CrewAI (role-based), AutoGen (conversational), n8n (visual low-code).</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-llm">
+      <div class="d-title">LLM — The Brain</div>
+      <div class="d-meta">Layer: Intelligence · Analogy: The Java runtime — everything runs through it</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it is</h4><p>The large language model is the reasoning, planning, decision-making, and generation engine. Not a tool — it IS the agent intelligence.</p></div>
+        <div class="d-col"><h4>What it decides</h4><ul><li>Which tool to call next</li><li>Whether task is complete</li><li>How to format output</li><li>When to ask for clarification</li><li>How to recover from errors</li></ul></div>
+        <div class="d-col"><h4>Key insight</h4><p>Swap the LLM like a database driver. The agent framework is the app layer; the LLM is the engine. Same code, different model = different behavior.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-prompt">
+      <div class="d-title">Prompt / Context Manager</div>
+      <div class="d-meta">Layer: Orchestration · The most underrated component in any agent system</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it does</h4><p>Assembles the final prompt that gets sent to the LLM. Pulls from memory, retrieved RAG chunks, system instructions, conversation history, and the current user input — in the right order.</p></div>
+        <div class="d-col"><h4>Why it matters</h4><ul><li>Context window is finite — you can't include everything</li><li>Order and formatting of context affects output quality</li><li>Lost-in-the-middle problem — LLMs miss info in the middle</li><li>Prompt compression and summarization needed at scale</li></ul></div>
+        <div class="d-col"><h4>Strategies</h4><ul><li>Sliding window — drop oldest messages</li><li>Summarize — compress old turns into summary</li><li>Selective retrieval — only inject relevant memory chunks</li><li>Token budgeting — allocate tokens per section explicitly</li></ul></div>
+      </div>
+    </div>
+
+    <div class="arch-arr"><div class="arr-line"></div><div class="arr-txt">↓ task dispatch to agents</div><div class="arr-line"></div></div>
+
+    <!-- AGENTS -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Agents</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c2)" onclick="tog('react')">
+          <div class="card-name">ReAct Agent</div>
+          <div class="card-desc">Reason → Act → Observe loop. Atomic unit of every agent system</div>
+          <div class="card-chips"><span class="chip">LangChain</span><span class="chip">LangGraph</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c2)" onclick="tog('sub')">
+          <div class="card-name">Specialized Sub-Agents</div>
+          <div class="card-desc">Role-based: Researcher, Coder, Critic, Executor — each with own tools</div>
+          <div class="card-chips"><span class="chip">CrewAI</span><span class="chip">AutoGen</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c2)" onclick="tog('router')">
+          <div class="card-name">Router Agent</div>
+          <div class="card-desc">Classifies intent and routes to the right specialist agent</div>
+          <div class="card-chips"><span class="chip">LangGraph edges</span><span class="chip">Classifier LLM</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-react">
+      <div class="d-title">ReAct Agent</div>
+      <div class="d-meta">Pattern: Reason + Act · Build this before any multi-agent work</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>The loop</h4><p>Think → Act (call tool) → Observe (read result) → Think again → repeat until goal is reached.</p></div>
+        <div class="d-col"><h4>Why it matters</h4><p>Every complex multi-agent system is built from ReAct agents. You cannot understand multi-agent without mastering this first.</p></div>
+        <div class="d-col"><h4>Where to build</h4><ul><li>LangChain AgentExecutor — fastest start</li><li>LangGraph — more control, production-grade</li><li>Raw function calling via Claude or OpenAI API</li></ul></div>
+      </div>
+    </div>
+    <div class="detail" id="d-sub">
+      <div class="d-title">Specialized Sub-Agents</div>
+      <div class="d-meta">Pattern: Role-based decomposition · Analogy: Microservices</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>The idea</h4><p>Give each agent a specific role, persona, and toolset. Like microservices — each does one thing well with a clear responsibility boundary.</p></div>
+        <div class="d-col"><h4>Common roles</h4><ul><li>Researcher — web search, retrieval</li><li>Coder — writes and executes code</li><li>Critic / QA — validates outputs</li><li>Planner — decomposes tasks</li><li>Executor — real-world actions</li></ul></div>
+        <div class="d-col"><h4>Frameworks</h4><p>CrewAI has the best DX for role-based agents. AutoGen works well for conversational patterns between agents.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-router">
+      <div class="d-title">Router Agent</div>
+      <div class="d-meta">Pattern: Intent classification + routing · Analogy: Apigee routing rules powered by LLM</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it does</h4><p>Classifies the incoming task and routes it to the correct specialist agent or workflow branch.</p></div>
+        <div class="d-col"><h4>Example</h4><p>Message arrives → Router: code task? → CodeAgent. Data question? → AnalystAgent. General? → ReActAgent.</p></div>
+        <div class="d-col"><h4>Implementation</h4><p>LangGraph conditional edges for routing between nodes, or a lightweight classifier LLM call before the main agent runs.</p></div>
+      </div>
+    </div>
+
+    <div class="arch-arr"><div class="arr-line"></div><div class="arr-txt">↓ tool calls · data reads · actions</div><div class="arr-line"></div></div>
+
+    <!-- TOOLS + MEMORY -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Tools + Memory</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c4)" onclick="tog('tools')">
+          <div class="card-name">Tool Layer</div>
+          <div class="card-desc">APIs, web search, code exec, DB queries, file I/O — invoked by LLM</div>
+          <div class="card-chips"><span class="chip">Function Calling</span><span class="chip">MCP</span><span class="chip">REST</span><span class="chip">SQL</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c8)" onclick="tog('memory')">
+          <div class="card-name">Memory System</div>
+          <div class="card-desc">Short-term (context), long-term (vector DB), entity memory across sessions</div>
+          <div class="card-chips"><span class="chip">Pinecone</span><span class="chip">ChromaDB</span><span class="chip">pgvector</span><span class="chip">Mem0</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c8)" onclick="tog('rag')">
+          <div class="card-name">RAG Pipeline</div>
+          <div class="card-desc">Retrieval-Augmented Generation — agent pulls knowledge before answering</div>
+          <div class="card-chips"><span class="chip">Embeddings</span><span class="chip">Vector Search</span><span class="chip">Chunking</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-tools">
+      <div class="d-title">Tool Layer</div>
+      <div class="d-meta">Layer: Actions · Analogy: External service integrations in Spring Boot</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What tools are</h4><p>Functions the LLM can invoke. You define the function and its description. The LLM decides when and which one to call.</p></div>
+        <div class="d-col"><h4>Tool types</h4><ul><li>Web search (Tavily, Bing API)</li><li>Code execution (Python REPL)</li><li>Database queries (SQL tools)</li><li>File read / write operations</li><li>REST API calls to external services</li><li>Browser automation (Playwright)</li></ul></div>
+        <div class="d-col"><h4>Tool design best practices</h4><ul><li>Write clear, specific descriptions — LLM reads these to decide when to call</li><li>Handle errors gracefully — return structured error messages, not exceptions</li><li>Keep tools atomic and composable</li><li>MCP (Model Context Protocol) — emerging standard for tool interfaces</li></ul></div>
+      </div>
+    </div>
+    <div class="detail" id="d-memory">
+      <div class="d-title">Memory System</div>
+      <div class="d-meta">Layer: Context · Analogy: Session state + persistent database combined</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>Types</h4><ul><li>In-context / short-term — conversation window</li><li>Semantic / long-term — embedded in vector DB</li><li>Episodic — logs of past agent run history</li><li>Procedural — how to do things (system prompts)</li><li>Entity memory — facts about specific people/things</li></ul></div>
+        <div class="d-col"><h4>Architectures</h4><ul><li>Mem0 — managed memory API layer</li><li>MemGPT — OS-inspired memory paging</li><li>LangGraph checkpointing — built-in state persistence</li></ul></div>
+        <div class="d-col"><h4>Why it matters</h4><p>Without memory every run starts from zero. Memory is what makes agents useful across sessions and what separates prototypes from real systems.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-rag">
+      <div class="d-title">RAG Pipeline</div>
+      <div class="d-meta">Layer: Knowledge · Retrieval-Augmented Generation</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>Pipeline steps</h4><ul><li>1. Ingest — load docs, split into chunks</li><li>2. Embed — convert to vector representations</li><li>3. Store — save in vector DB with metadata</li><li>4. Query — embed question, find nearest chunks</li><li>5. Augment — inject into prompt</li><li>6. Generate — grounded response</li></ul></div>
+        <div class="d-col"><h4>Vector DB internals</h4><ul><li>HNSW — approximate nearest neighbor indexing</li><li>ANN — approximate nearest neighbor search</li><li>Metadata filtering — filter before or after search</li><li>Hybrid search — keyword + semantic combined</li></ul></div>
+        <div class="d-col"><h4>How agents use RAG</h4><p>Agents call RAG as a tool: search_knowledge_base(query). The agent decides when to retrieve vs when to use existing context.</p></div>
+      </div>
+    </div>
+
+    <div class="arch-arr"><div class="arr-line"></div><div class="arr-txt">↓ output parsed · results flow back</div><div class="arr-line"></div></div>
+
+    <!-- OUTPUT PARSER (NEW) -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Output</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c7)" onclick="tog('parser')">
+          <div class="card-name">Output Parser / Structured Output</div>
+          <div class="card-desc">Validates, transforms, and enforces schema on LLM responses before downstream use</div>
+          <div class="card-chips"><span class="chip">Pydantic</span><span class="chip">JSON Schema</span><span class="chip">Instructor</span><span class="chip">Guardrails AI</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c7)" onclick="tog('hitl')">
+          <div class="card-name">Human-in-the-Loop (HITL)</div>
+          <div class="card-desc">Approval gates, checkpoints, interrupt/resume patterns for high-stakes actions</div>
+          <div class="card-chips"><span class="chip">LangGraph interrupt</span><span class="chip">Custom approval flows</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-parser">
+      <div class="d-title">Output Parser / Structured Output</div>
+      <div class="d-meta">Layer: Output · Sits between every LLM response and the rest of the system</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it does</h4><p>Takes the raw LLM text response and validates, parses, and enforces a schema before it's used by the next agent, tool, or returned to the user.</p></div>
+        <div class="d-col"><h4>Patterns</h4><ul><li>Pydantic models — define expected output shape</li><li>JSON mode — force LLM to respond in JSON</li><li>Instructor library — structured outputs via function calling</li><li>Retry on malformed output — re-prompt with error feedback</li><li>Output guardrails — schema validation post-generation</li></ul></div>
+        <div class="d-col"><h4>Why critical</h4><p>Multi-agent systems pass outputs between agents. If Agent A returns malformed output, Agent B fails. Structured outputs are the contract between agents — like typed interfaces in Java.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-hitl">
+      <div class="d-title">Human-in-the-Loop (HITL)</div>
+      <div class="d-meta">Layer: Control · Critical for any high-stakes or irreversible action</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What it is</h4><p>Checkpoints in the agent workflow where a human must approve, review, or provide input before the agent proceeds — especially before irreversible actions.</p></div>
+        <div class="d-col"><h4>Patterns</h4><ul><li>Interrupt / resume — pause graph, wait for approval</li><li>Approval gate — agent proposes, human approves action</li><li>Feedback loop — human corrects agent output mid-run</li><li>Confidence threshold — auto-proceed above threshold, pause below</li></ul></div>
+        <div class="d-col"><h4>Implementation</h4><p>LangGraph has built-in interrupt/resume support. For simpler flows, a webhook callback or UI approval step before the agent continues works well.</p></div>
+      </div>
+    </div>
+
+    <div class="arch-arr"><div class="arr-line"></div><div class="arr-txt">↓ state updated · infra layer</div><div class="arr-line"></div></div>
+
+    <!-- INFRA -->
+    <div class="arch-layer">
+      <div class="arch-lbl">Infra</div>
+      <div class="arch-row">
+        <div class="card" style="--card-c:var(--c1)" onclick="tog('state')">
+          <div class="card-name">State Management</div>
+          <div class="card-desc">Tracks task graph, agent progress, results across all steps and branches</div>
+          <div class="card-chips"><span class="chip">LangGraph</span><span class="chip">Redis</span><span class="chip">Postgres</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c1)" onclick="tog('guard')">
+          <div class="card-name">Guardrails + AI Security</div>
+          <div class="card-desc">Input/output validation, PII filtering, prompt injection defense, policy enforcement</div>
+          <div class="card-chips"><span class="chip">Guardrails AI</span><span class="chip">NeMo</span><span class="chip">Custom filters</span></div>
+        </div>
+        <div class="card" style="--card-c:var(--c1)" onclick="tog('obs')">
+          <div class="card-name">Observability + Cost</div>
+          <div class="card-desc">Trace every agent step, token usage, latency, cost per run — like Splunk for agents</div>
+          <div class="card-chips"><span class="chip">LangSmith</span><span class="chip">Langfuse</span><span class="chip">OpenTelemetry</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="detail" id="d-state">
+      <div class="d-title">State Management</div>
+      <div class="d-meta">Layer: Infra · Analogy: Distributed session state + task graph</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What state tracks</h4><ul><li>What has been done / in progress</li><li>Intermediate results per agent</li><li>Conversation and run history</li><li>Current plan and next steps</li><li>Error state and retry count</li></ul></div>
+        <div class="d-col"><h4>LangGraph approach</h4><p>State is a typed dict passed through graph nodes. Each node reads and writes state. The graph controls flow. Checkpointing enables pause/resume.</p></div>
+        <div class="d-col"><h4>Persistence</h4><p>Serialize state to Redis or Postgres between steps so long-running agents can survive restarts and resume from exactly where they stopped.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-guard">
+      <div class="d-title">Guardrails + AI Security</div>
+      <div class="d-meta">Layer: Infra · Non-negotiable for any production system</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>Guardrails coverage</h4><ul><li>Input validation — schema enforcement</li><li>Output validation — hallucination checks</li><li>PII detection and masking</li><li>Policy and compliance enforcement</li><li>LLM-as-judge pattern for output quality</li></ul></div>
+        <div class="d-col"><h4>AI Security threats</h4><ul><li>Prompt injection — malicious input hijacks agent</li><li>Jailbreaking — bypassing model safety guardrails</li><li>Data poisoning — corrupting training or RAG data</li><li>Adversarial inputs — crafted inputs causing wrong outputs</li><li>Indirect injection via tool results</li></ul></div>
+        <div class="d-col"><h4>Architecture position</h4><p>Wraps every LLM call as middleware — filter on both the request in and the response out. Treat it like a security layer, not an afterthought.</p></div>
+      </div>
+    </div>
+    <div class="detail" id="d-obs">
+      <div class="d-title">Observability + Cost Management</div>
+      <div class="d-meta">Layer: Infra · Analogy: Splunk + New Relic + billing dashboard for agent runs</div>
+      <div class="d-grid">
+        <div class="d-col"><h4>What to observe</h4><ul><li>Every LLM call — prompt, response, tokens, latency</li><li>Tool calls — input, output, duration</li><li>Agent decisions — path taken and why</li><li>Errors, retries, fallbacks</li><li>Cost per run, per agent, per day</li></ul></div>
+        <div class="d-col"><h4>Cost management</h4><ul><li>Token budgeting — hard cap per run</li><li>Prompt caching — reuse repeated context</li><li>Model routing — use cheap model for simple tasks</li><li>Batching — group calls to reduce overhead</li><li>Right-sizing — don't use GPT-4o for every step</li></ul></div>
+        <div class="d-col"><h4>Tools</h4><p>LangSmith (best DX), Langfuse (open source), OpenTelemetry for vendor-neutral tracing. Add from day one — you cannot debug multi-agent runs without traces.</p></div>
+      </div>
+    </div>
+
+  </div><!-- /arch -->
+</div>
+
+<!-- ══════════════════════════════════════
+     SECTION 2 — AGENT PATTERNS
+══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-hd"><h2>Agent Patterns</h2><span>CHOOSE BASED ON USE CASE COMPLEXITY</span></div>
+
+  <div class="pat-tabs">
+    <div class="pat-tab active" onclick="showPat('single',this)">Single Agent (ReAct)</div>
+    <div class="pat-tab" onclick="showPat('seq',this)">Sequential Pipeline</div>
+    <div class="pat-tab" onclick="showPat('par',this)">Parallel Fan-out</div>
+    <div class="pat-tab" onclick="showPat('sup',this)">Supervisor–Worker</div>
+    <div class="pat-tab" onclick="showPat('deb',this)">Reflection / Debate</div>
+  </div>
+
+  <div class="pat-view active" id="pv-single">
+    <div class="pat-box">
+      <h3>Single ReAct Agent</h3>
+      <p class="pat-desc">One LLM. Iterative think → act → observe loop. Build this before any multi-agent work.</p>
+      <div class="flow">
+        <div class="fn fn-u">User Goal</div><div class="fa">→</div>
+        <div class="fn fn-l">LLM Reasons</div><div class="fa">→</div>
+        <div class="fn fn-t">Tool Call</div><div class="fa">→</div>
+        <div class="fn fn-l">LLM Observes</div><div class="fa">→</div>
+        <div class="fn fn-t">Tool Call</div><div class="fa">→</div>
+        <div class="fn fn-u">Final Answer</div>
+      </div>
+      <div class="pat-fw">Frameworks: LangChain AgentExecutor · LangGraph single node · raw function calling via API</div>
+    </div>
+  </div>
+  <div class="pat-view" id="pv-seq">
+    <div class="pat-box">
+      <h3>Sequential Pipeline</h3>
+      <p class="pat-desc">Output of Agent A becomes input of Agent B. Each stage is a specialized LLM agent with a clear role.</p>
+      <div class="flow">
+        <div class="fn fn-u">Input</div><div class="fa">→</div>
+        <div class="fn fn-a">Researcher</div><div class="fa">→</div>
+        <div class="fn fn-a">Analyst</div><div class="fa">→</div>
+        <div class="fn fn-a">Writer</div><div class="fa">→</div>
+        <div class="fn fn-u">Final Report</div>
+      </div>
+      <div class="pat-fw">Frameworks: CrewAI sequential crew · n8n workflow chains · LangGraph linear graph</div>
+    </div>
+  </div>
+  <div class="pat-view" id="pv-par">
+    <div class="pat-box">
+      <h3>Parallel Fan-out / Fan-in</h3>
+      <p class="pat-desc">Orchestrator dispatches to multiple agents simultaneously, then aggregates results. Reduces total latency.</p>
+      <div class="flow">
+        <div class="fn fn-o">Orchestrator</div><div class="fa">→</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div class="fn fn-a">Agent A</div>
+          <div class="fn fn-a">Agent B</div>
+          <div class="fn fn-a">Agent C</div>
+        </div>
+        <div class="fa">→</div>
+        <div class="fn fn-o">Aggregator</div><div class="fa">→</div>
+        <div class="fn fn-u">Merged Output</div>
+      </div>
+      <div class="pat-fw">Frameworks: LangGraph parallel nodes · AutoGen GroupChat · CrewAI concurrent tasks</div>
+    </div>
+  </div>
+  <div class="pat-view" id="pv-sup">
+    <div class="pat-box">
+      <h3>Supervisor–Worker (Hierarchical)</h3>
+      <p class="pat-desc">Supervisor plans and delegates. Workers execute. Supervisor evaluates and re-routes. Most common production pattern.</p>
+      <div class="flow">
+        <div class="fn fn-u">Goal</div><div class="fa">→</div>
+        <div class="fn fn-o">Supervisor LLM</div><div class="fa">⇄</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div class="fn fn-a">Coder</div>
+          <div class="fn fn-a">QA</div>
+          <div class="fn fn-a">Docs</div>
+        </div>
+        <div class="fa">→</div>
+        <div class="fn fn-u">Deliverable</div>
+      </div>
+      <div class="pat-fw">Frameworks: CrewAI hierarchical process · LangGraph supervisor pattern · AutoGen nested chats</div>
+    </div>
+  </div>
+  <div class="pat-view" id="pv-deb">
+    <div class="pat-box">
+      <h3>Reflection / Agent Debate (Critic Pattern)</h3>
+      <p class="pat-desc">Multiple agents critique each other's outputs in a loop. Reduces hallucinations for high-stakes tasks.</p>
+      <div class="flow">
+        <div class="fn fn-a">Generator</div><div class="fa">→</div>
+        <div class="fn fn-a">Critic</div><div class="fa">→</div>
+        <div class="fn fn-a">Refiner</div><div class="fa">→</div>
+        <div class="fn fn-a">Critic</div><div class="fa">→</div>
+        <div class="fn fn-u">Final Output</div>
+      </div>
+      <div class="pat-fw">Frameworks: AutoGen AssistantAgent + CriticAgent · LangGraph reflection loops</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SECTION 3 — LEARNING ROADMAP
+══════════════════════════════════════ -->
+<div class="section">
+  <div class="sec-hd"><h2>Learning Roadmap</h2><span>12 LEVELS · ZERO TO PRODUCTION AI ENGINEER</span></div>
+
+  <!-- GROUP A -->
+  <div class="group-label">Group A — Foundations & Theory</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#64748b">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 0</div>
+      <h4>AI Fundamentals</h4>
+      <div class="rm-desc">Core concepts every AI engineer must understand before writing any code</div>
+      <ul class="rm-topics">
+        <li>What is AI, ML, DL — how they relate and differ</li>
+        <li>Narrow AI vs General AI vs AGI</li>
+        <li>Supervised, unsupervised, and reinforcement learning</li>
+        <li>Responsible AI — bias, fairness, transparency, accountability</li>
+        <li>History and evolution of AI — from rule-based to neural to LLMs</li>
+        <li>AI landscape today — who the key players are</li>
+        <li>How a model learns — training, loss function, optimization</li>
+        <li>Inference vs training — understanding the difference</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://course.elementsofai.com/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Elements of AI — Free intro course (Univ. of Helsinki)</a></li><li><a href="https://www.coursera.org/learn/ai-for-everyone" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>AI For Everyone — Andrew Ng (Coursera, free audit)</a></li><li><a href="https://www.ibm.com/think/topics/artificial-intelligence" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>What is AI, ML, DL? — IBM explainer</a></li><li><a href="https://ai.google/responsibility/principles/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Responsible AI Principles — Google</a></li><li><a href="https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>3Blue1Brown — Neural Networks series (YouTube)</a></li></ul></div>
+    </div>
+
+    <div class="rm-card" style="--lc:#6366f1">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 1</div>
+      <h4>ML Foundations</h4>
+      <div class="rm-desc">Core ML every AI engineer needs — not a data science course, focused on what matters for building systems</div>
+      <ul class="rm-topics">
+        <li>Linear and logistic regression — how and why</li>
+        <li>Decision trees, random forests, gradient boosting (XGBoost)</li>
+        <li>Overfitting, underfitting, bias-variance tradeoff</li>
+        <li>Regularization — L1 (Lasso), L2 (Ridge), Dropout</li>
+        <li>Train / validation / test splits, cross-validation</li>
+        <li>Evaluation metrics — accuracy, precision, recall, F1, AUC-ROC</li>
+        <li>Feature engineering and data preprocessing</li>
+        <li>Clustering — K-means, DBSCAN (unsupervised learning)</li>
+        <li>Dimensionality reduction — PCA, t-SNE</li>
+        <li>Data pipelines for AI — ingestion, cleaning, quality</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.coursera.org/specializations/machine-learning-introduction" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Machine Learning Specialization — Andrew Ng (Coursera)</a></li><li><a href="https://developers.google.com/machine-learning/crash-course" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Google ML Crash Course — Free, practical</a></li><li><a href="https://www.oreilly.com/library/view/hands-on-machine-learning/9781492032632/" target="_blank" rel="noopener"><span class="res-type">📖 Book</span>Hands-On ML with Scikit-Learn, Keras & TF — Aurélien Géron</a></li><li><a href="https://www.youtube.com/@statquest" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>StatQuest with Josh Starmer — ML concepts (YouTube)</a></li><li><a href="https://www.kaggle.com/learn" target="_blank" rel="noopener"><span class="res-type">🛠 Practice</span>Kaggle Learn — Free ML micro-courses + datasets</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 0</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#8b5cf6">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 2</div>
+      <h4>Deep Learning & NLP</h4>
+      <div class="rm-desc">Neural network fundamentals and language understanding — the backbone of LLMs</div>
+      <ul class="rm-topics">
+        <li>Neural networks — layers, weights, activation functions</li>
+        <li>Backpropagation and gradient descent (intuition, not just math)</li>
+        <li>CNNs — convolutional networks for spatial data</li>
+        <li>RNNs — recurrent networks for sequential data</li>
+        <li>LSTMs — solving the vanishing gradient problem in RNNs</li>
+        <li>RNN vs LSTM vs Transformer — comparison, why Transformers won</li>
+        <li>NLP basics — tokenization, stemming, lemmatization, POS tagging</li>
+        <li>Word2Vec, GloVe — early word embeddings before Transformers</li>
+        <li>Sequence-to-sequence models — translation, summarization</li>
+        <li>NLP tasks — classification, NER, sentiment, Q&amp;A</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/courses/deep-learning-specialization/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Deep Learning Specialization — Andrew Ng (deeplearning.ai)</a></li><li><a href="https://course.fast.ai/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>fast.ai — Practical Deep Learning for Coders (free)</a></li><li><a href="https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>Andrej Karpathy — Neural Networks: Zero to Hero (YouTube)</a></li><li><a href="https://colah.github.io/posts/2015-08-Understanding-LSTMs/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Understanding LSTMs — Colah's Blog (must-read)</a></li><li><a href="https://www.youtube.com/watch?v=AsNTP8Kwu80" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>RNN vs LSTM vs Transformer — StatQuest (YouTube)</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 1</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#a855f7">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 3</div>
+      <h4>Transformers — How LLMs Actually Work</h4>
+      <div class="rm-desc">The architecture behind every modern LLM — understand it from first principles</div>
+      <ul class="rm-topics">
+        <li>Tokens — how text is split, BPE tokenization, token limits, cost</li>
+        <li>Embeddings — representing meaning as high-dimensional vectors</li>
+        <li>Positional encoding — injecting order into token sequences</li>
+        <li>Self-attention — how every token attends to every other token</li>
+        <li>Multi-head attention — parallel attention across multiple dimensions</li>
+        <li>Feed-forward layers — processing representations after attention</li>
+        <li>Encoder vs decoder vs encoder-decoder architectures</li>
+        <li>Layer normalization, residual connections</li>
+        <li>Pre-training, fine-tuning, RLHF — how LLMs are built</li>
+        <li>Overview of major LLMs — GPT, Claude, Gemini, Mistral, LLaMA</li>
+        <li>Role of LLMs in the broader AI stack</li>
+        <li>Evolution of AI models — from BERT to GPT to instruction-tuned models</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.3blue1brown.com/lessons/attention" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>3Blue1Brown — Attention in Transformers (YouTube)</a></li><li><a href="https://www.youtube.com/watch?v=kCc8FmEb1nY" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>Andrej Karpathy — Let's build GPT from scratch (YouTube)</a></li><li><a href="https://poloclub.github.io/transformer-explainer/" target="_blank" rel="noopener"><span class="res-type">🌐 Interactive</span>Transformer Explainer — Visual GPT-2 walkthrough</a></li><li><a href="https://www.deeplearning.ai/short-courses/how-transformer-llms-work/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>How Transformer LLMs Work — DeepLearning.AI (free)</a></li><li><a href="https://huggingface.co/learn/llm-course/chapter1/4" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>How Transformers Work — Hugging Face NLP Course</a></li><li><a href="https://www.deeplearning.ai/short-courses/attention-in-transformers-concepts-and-code-in-pytorch/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Attention in Transformers: Code in PyTorch — DeepLearning.AI</a></li><li><a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener"><span class="res-type">📄 Paper</span>Attention Is All You Need — Original 2017 paper (arXiv)</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 2</div>
+    </div>
+
+  </div>
+
+  <!-- GROUP B -->
+  <div class="group-label">Group B — Model Adaptation & Evaluation</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#ec4899">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 4</div>
+      <h4>Fine-tuning & Model Adaptation</h4>
+      <div class="rm-desc">When and how to adapt an LLM for your specific domain — a critical skill for AI engineers</div>
+      <ul class="rm-topics">
+        <li>When to fine-tune vs prompt engineer vs RAG — decision framework</li>
+        <li>Full fine-tuning — costs, compute, when it makes sense</li>
+        <li>Parameter-Efficient Fine-Tuning (PEFT) — adapting without full retraining</li>
+        <li>LoRA — Low-Rank Adaptation, the most practical fine-tuning method</li>
+        <li>QLoRA — quantized LoRA for fine-tuning on limited hardware</li>
+        <li>Instruction tuning — training models to follow instructions</li>
+        <li>RLHF — Reinforcement Learning from Human Feedback</li>
+        <li>DPO — Direct Preference Optimization (simpler alternative to RLHF)</li>
+        <li>Datasets for fine-tuning — preparation, format, quality requirements</li>
+        <li>Hugging Face ecosystem — Transformers, PEFT, datasets libraries</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/finetuning-large-language-models/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Finetuning LLMs — DeepLearning.AI short course (free)</a></li><li><a href="https://sebastianraschka.com/blog/2023/llm-finetuning-lora.html" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LoRA Explained — Sebastian Raschka</a></li><li><a href="https://huggingface.co/blog/rlhf" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>RLHF — Illustrating Reinforcement Learning from Human Feedback</a></li><li><a href="https://huggingface.co/docs/peft/index" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Hugging Face PEFT Library Docs</a></li><li><a href="https://www.wandb.courses/courses/training-fine-tuning-LLMs" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>LLM Fine-Tuning with Hugging Face — Weights & Biases</a></li><li><a href="https://huggingface.co/blog/4bit-transformers-bitsandbytes" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>QLoRA Paper Explained — Tim Dettmers</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 3</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#f43f5e">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 5</div>
+      <h4>Model Evaluation & Benchmarking</h4>
+      <div class="rm-desc">How to measure whether your model or agent is actually working — often skipped, always critical</div>
+      <ul class="rm-topics">
+        <li>LLM evaluation — why it's hard and different from classical ML metrics</li>
+        <li>BLEU, ROUGE — automatic metrics for text generation</li>
+        <li>Human evaluation — rubrics, consistency, inter-annotator agreement</li>
+        <li>LLM-as-judge — using a stronger model to evaluate a weaker one</li>
+        <li>Benchmarks — MMLU, HumanEval, HellaSwag, TruthfulQA</li>
+        <li>Agent evaluation — trajectory evaluation, tool call accuracy</li>
+        <li>End-to-end test harnesses for agents</li>
+        <li>Hallucination detection and measurement</li>
+        <li>A/B testing models in production</li>
+        <li>Regression testing — catching degradation across model versions</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/evaluating-debugging-generative-ai/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Evaluating & Debugging Generative AI — DeepLearning.AI (free)</a></li><li><a href="https://lmsys.org/blog/2023-05-03-arena/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LLM Evaluation — LMSYS Chatbot Arena approach</a></li><li><a href="https://arxiv.org/abs/2306.05685" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LLM-as-a-Judge — Judging LLM-as-a-Judge paper (arXiv)</a></li><li><a href="https://langfuse.com/" target="_blank" rel="noopener"><span class="res-type">🛠 Tool</span>Langfuse — Open source LLM evaluation & tracing</a></li><li><a href="https://docs.ragas.io/en/latest/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Ragas — RAG evaluation framework docs</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 4</div>
+    </div>
+
+  </div>
+
+  <!-- GROUP C -->
+  <div class="group-label">Group C — Engineering & Tooling</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#3b82f6">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 6</div>
+      <h4>Python for AI Engineering</h4>
+      <div class="rm-desc">Just enough Python to build production AI pipelines — not a generic Python course</div>
+      <ul class="rm-topics">
+        <li>Variables, loops, functions, dicts, lists, comprehensions</li>
+        <li>pip, virtual environments (venv / conda), dependency management</li>
+        <li>Making API calls — requests, httpx, handling errors and retries</li>
+        <li>Async / await — essential for agent frameworks and streaming</li>
+        <li>File I/O, JSON parsing, environment variables with python-dotenv</li>
+        <li>NumPy basics — arrays, operations (needed for embeddings)</li>
+        <li>Pandas basics — dataframes, filtering, cleaning</li>
+        <li>Type hints and Pydantic — typed data models for structured outputs</li>
+        <li>Git workflow — branches, PRs, keeping AI project repos clean</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.coursera.org/specializations/python" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Python for Everybody — Coursera (free audit)</a></li><li><a href="https://automatetheboringstuff.com/" target="_blank" rel="noopener"><span class="res-type">📖 Book</span>Automate the Boring Stuff with Python — free online</a></li><li><a href="https://www.youtube.com/watch?v=rfscVS0vtbw" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Python Crash Course for AI — freeCodeCamp (YouTube)</a></li><li><a href="https://docs.pydantic.dev/latest/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Pydantic Docs — Data validation for Python</a></li><li><a href="https://realpython.com/async-io-python/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Real Python — Async/await in Python</a></li><li><a href="https://exercism.org/tracks/python" target="_blank" rel="noopener"><span class="res-type">🛠 Practice</span>Exercism Python track — Free coding exercises</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 5</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#0891b2">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 7</div>
+      <h4>Prompt Engineering & Context Management</h4>
+      <div class="rm-desc">The skill that connects your intent to model behavior — and managing the finite context window at scale</div>
+      <ul class="rm-topics">
+        <li>Zero-shot, few-shot, chain-of-thought, tree-of-thought prompting</li>
+        <li>System prompts — persona, constraints, output format</li>
+        <li>Structured output — JSON mode, XML tags, Pydantic with LLMs</li>
+        <li>Prompt templates with variables — LangChain PromptTemplate</li>
+        <li>Iterative prompt debugging — how to systematically improve prompts</li>
+        <li>Context window management — what it is and why it matters</li>
+        <li>Lost-in-the-middle problem — LLMs miss info in the middle of context</li>
+        <li>Context strategies — sliding window, summarization, compression</li>
+        <li>Token budgeting — allocating tokens per section explicitly</li>
+        <li>Prompt caching — reducing cost on repeated context</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/chatgpt-prompt-engineering-for-developers/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>ChatGPT Prompt Engineering for Devs — DeepLearning.AI (free)</a></li><li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering/overview" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Anthropic Prompt Engineering Docs — Official guide</a></li><li><a href="https://www.promptingguide.ai/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Prompt Engineering Guide — DAIR.AI (comprehensive)</a></li><li><a href="https://arxiv.org/abs/2307.03172" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Lost in the Middle — Research paper on context position</a></li><li><a href="https://www.deeplearning.ai/short-courses/long-context-windowing/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Prompt Compression & Context Management — DeepLearning.AI</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 6</div>
+    </div>
+
+  </div>
+
+  <!-- GROUP D -->
+  <div class="group-label">Group D — Retrieval & Memory</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#f59e0b">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 8</div>
+      <h4>RAG & Vector Databases</h4>
+      <div class="rm-desc">Give your LLM access to your own knowledge — the foundation for agent memory and grounded responses</div>
+      <ul class="rm-topics">
+        <li>What embeddings are and how similarity search works</li>
+        <li>Vector databases — what they are and why they exist</li>
+        <li>HNSW indexing — how approximate nearest neighbor search works</li>
+        <li>Metadata filtering — filter before or after vector search</li>
+        <li>Document ingestion — loaders, chunking strategies, trade-offs</li>
+        <li>Embedding models — OpenAI, Cohere, sentence-transformers</li>
+        <li>ChromaDB hands-on — local vector DB for development</li>
+        <li>Pinecone hands-on — managed vector DB for production</li>
+        <li>Hybrid search — combining keyword (BM25) + semantic search</li>
+        <li>Build a full RAG pipeline — ingest → embed → store → retrieve → answer</li>
+        <li>Advanced RAG — re-ranking, query expansion, multi-query retrieval</li>
+        <li>Agent memory architectures — Mem0, MemGPT, episodic vs semantic</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/building-applications-with-vector-databases/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Building Apps with Vector DBs — DeepLearning.AI (free)</a></li><li><a href="https://www.deeplearning.ai/short-courses/langchain-chat-with-your-data/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>LangChain: Chat with Your Data — DeepLearning.AI (free)</a></li><li><a href="https://www.pinecone.io/learn/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Pinecone Learning Center — Vector DB deep dives</a></li><li><a href="https://docs.trychroma.com/getting-started" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>ChromaDB Docs — Getting started</a></li><li><a href="https://www.llamaindex.ai/blog/a-cheat-sheet-and-some-recipes-for-building-advanced-rag-rag-cheat-sheet-a2a2e3c7f8a1" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Advanced RAG Techniques — Llamaindex blog</a></li><li><a href="https://courses.nvidia.com/courses/course-v1:DLI+S-FX-15+V1/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Building RAG Agents with LLMs — NVIDIA course (free)</a></li><li><a href="https://docs.mem0.ai/overview" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Mem0 Docs — Agent memory layer</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 7</div>
+    </div>
+
+  </div>
+
+  <!-- GROUP E -->
+  <div class="group-label">Group E — Agents & Multi-Agent Systems</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#ef4444">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 9</div>
+      <h4>Single Agent — ReAct & Tool Use</h4>
+      <div class="rm-desc">Build your first real agent. One LLM, tools it can call, iterative reasoning loop.</div>
+      <ul class="rm-topics">
+        <li>Agent vs chatbot vs chain — what exactly is the difference</li>
+        <li>Tool / function calling — define, register, invoke, handle errors</li>
+        <li>Tool design best practices — descriptions, atomicity, error returns</li>
+        <li>ReAct loop — Reason, Act, Observe, repeat until done</li>
+        <li>Build agent with LangChain AgentExecutor</li>
+        <li>LangGraph deep dive — nodes, edges, state, conditional routing</li>
+        <li>LangGraph checkpointing — pause, resume, human-in-the-loop</li>
+        <li>Structured outputs — Pydantic, Instructor, retry on malformed output</li>
+        <li>Add memory — short-term conversation history</li>
+        <li>Debugging and tracing with LangSmith</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/ai-agents-in-langgraph/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>AI Agents in LangGraph — DeepLearning.AI (free)</a></li><li><a href="https://langchain-ai.github.io/langgraph/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangGraph Official Docs — Concepts & tutorials</a></li><li><a href="https://academy.langchain.com/courses/intro-to-langgraph" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangChain Academy — Free intro to LangGraph</a></li><li><a href="https://www.deeplearning.ai/short-courses/functions-tools-agents-langchain/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Functions, Tools & Agents with LangChain — DeepLearning.AI</a></li><li><a href="https://arxiv.org/abs/2210.03629" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>ReAct: Synergizing Reasoning & Acting — Original paper</a></li><li><a href="https://www.coursera.org/learn/agentic-ai-with-langchain-and-langgraph" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Agentic AI with LangChain & LangGraph — IBM (Coursera)</a></li><li><a href="https://docs.smith.langchain.com/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangSmith Docs — Tracing & observability</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 8</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#dc2626">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 10</div>
+      <h4>Multi-Agent Systems</h4>
+      <div class="rm-desc">Multiple agents collaborating with roles, routing, and shared state — the real power of agentic AI</div>
+      <ul class="rm-topics">
+        <li>Agent roles — Planner, Executor, Critic, Router, Researcher</li>
+        <li>Sequential pipeline pattern — A feeds B feeds C</li>
+        <li>Supervisor–Worker pattern with LangGraph</li>
+        <li>Parallel fan-out / fan-in for latency reduction</li>
+        <li>Reflection / debate pattern for quality improvement</li>
+        <li>CrewAI — define crew, roles, tasks, tools</li>
+        <li>AutoGen — conversational multi-agent framework</li>
+        <li>Agent communication — shared state, message passing protocols</li>
+        <li>Routing logic — how agents hand off to each other</li>
+        <li>Human-in-the-loop — approval gates, interrupt/resume patterns</li>
+        <li>Cost management across multi-agent runs — token budgets per agent</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/multi-ai-agent-systems-with-crewai/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Multi AI Agent Systems with crewAI — DeepLearning.AI (free)</a></li><li><a href="https://www.deeplearning.ai/short-courses/ai-agentic-design-patterns-with-autogen/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>AI Agentic Design Patterns with AutoGen — DeepLearning.AI (free)</a></li><li><a href="https://docs.crewai.com/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>CrewAI Docs — Getting started</a></li><li><a href="https://microsoft.github.io/autogen/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>AutoGen Docs — Microsoft multi-agent framework</a></li><li><a href="https://langchain-ai.github.io/langgraph/tutorials/multi_agent/multi-agent-collaboration/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangGraph Multi-Agent Patterns — Official examples</a></li><li><a href="https://www.youtube.com/watch?v=sal78ACtGTc" target="_blank" rel="noopener"><span class="res-type">🎬 Video</span>Building Multi-Agent Systems — Andrew Ng (YouTube)</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 9</div>
+    </div>
+
+  </div>
+
+  <!-- GROUP F -->
+  <div class="group-label">Group F — Production, Security & Deployment</div>
+  <div class="roadmap">
+
+    <div class="rm-card" style="--lc:#22c55e">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 11</div>
+      <h4>Production-Ready Agents</h4>
+      <div class="rm-desc">Everything needed to take agents from prototype to safe, observable, deployed systems</div>
+      <ul class="rm-topics">
+        <li>Guardrails — input validation, output schema enforcement</li>
+        <li>PII detection and masking in inputs and outputs</li>
+        <li>Hallucination detection — LLM-as-judge, factual grounding checks</li>
+        <li>AI Security — prompt injection, jailbreaking, adversarial inputs, data poisoning</li>
+        <li>Full observability — LangSmith / Langfuse from day one</li>
+        <li>Token cost tracking, budget limits, model routing by task complexity</li>
+        <li>Prompt caching and batching for cost reduction</li>
+        <li>Error handling, retries, exponential backoff, fallback strategies</li>
+        <li>Streaming responses — real-time output for better UX</li>
+        <li>Async serving — handling concurrent agent runs</li>
+        <li>Containerize with Docker — package agent as deployable service</li>
+        <li>Deploy to cloud — API wrapping, rate limiting, scaling</li>
+        <li>Evaluation and regression testing for agents in CI/CD</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://www.deeplearning.ai/short-courses/safe-and-reliable-ai-via-guardrails/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Safe and Reliable AI via Guardrails — DeepLearning.AI</a></li><li><a href="https://www.guardrailsai.com/docs" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Guardrails AI Docs</a></li><li><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>OWASP Top 10 for LLMs — AI security risks</a></li><li><a href="https://langfuse.com/docs" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LLM Observability with Langfuse — Full guide</a></li><li><a href="https://www.deeplearning.ai/short-courses/llmops/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>LLMOps — DeepLearning.AI short course (free)</a></li><li><a href="https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>Prompt Caching — Anthropic Claude docs</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 10</div>
+    </div>
+
+    <div class="rm-card" style="--lc:#eab308">
+      <div class="rm-acc"></div>
+      <div class="rm-lvl">Level 12</div>
+      <h4>Build Something Real</h4>
+      <div class="rm-desc">Apply everything end-to-end — design, build, deploy, and iterate on a real agentic product</div>
+      <ul class="rm-topics">
+        <li>Pick a domain — internal tool, SaaS product, automation pipeline</li>
+        <li>Design the agent architecture from scratch — choose the right pattern</li>
+        <li>Integrate with real data sources, APIs, and knowledge bases</li>
+        <li>Implement guardrails and security from the start</li>
+        <li>Add human-in-the-loop checkpoints for high-stakes decisions</li>
+        <li>Instrument observability — trace everything from day one</li>
+        <li>Deploy, monitor real usage, measure cost per run</li>
+        <li>Iterate — evaluate outputs, improve prompts, swap models</li>
+        <li>Document the architecture — diagrams, decision log, runbook</li>
+      </ul>
+<div class="res-section"><div class="res-label">Resources</div><ul class="res-list"><li><a href="https://templates.langchain.com/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangChain Templates — Production app starters</a></li><li><a href="https://langchain-ai.github.io/langgraph/cloud/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>LangGraph Production Deployment Guide</a></li><li><a href="https://fullstackdeeplearning.com/" target="_blank" rel="noopener"><span class="res-type">🎓 Course</span>Building Production AI Apps — Full Stack Deep Learning</a></li><li><a href="https://www.12factor.net/" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>12 Factor App for LLMs — Best practices guide</a></li><li><a href="https://www.langchain.com/langsmith" target="_blank" rel="noopener"><span class="res-type">🛠 Tool</span>LangSmith — Production tracing & evaluation</a></li><li><a href="https://www.latent.space/p/2025-engineer" target="_blank" rel="noopener"><span class="res-type">📖 Article</span>AI Engineering Roadmap 2025 — swyx</a></li></ul></div>
+      <div class="rm-pre">Prereq → Level 11</div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// THEME
+function setTheme(t,el){
+  document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  try{localStorage.setItem('arch-theme',t);}catch(e){}
+}
+(function(){
+  try{
+    var s=localStorage.getItem('arch-theme');
+    if(s){
+      document.documentElement.setAttribute('data-theme',s);
+      var b=document.querySelector('[data-t="'+s+'"]');
+      if(b){document.querySelectorAll('.tbtn').forEach(x=>x.classList.remove('active'));b.classList.add('active');}
+    }
+  }catch(e){}
+})();
+
+// ARCH TOGGLE
+var curDetail=null, curCard=null;
+function tog(id){
+  var d=document.getElementById('d-'+id);
+  var c=document.querySelector('[onclick="tog(\''+id+'\')"]');
+  if(curDetail&&curDetail!==d){curDetail.classList.remove('open');if(curCard)curCard.classList.remove('active');}
+  if(d.classList.contains('open')){d.classList.remove('open');c.classList.remove('active');curDetail=null;curCard=null;}
+  else{d.classList.add('open');c.classList.add('active');curDetail=d;curCard=c;setTimeout(()=>d.scrollIntoView({behavior:'smooth',block:'nearest'}),60);}
+}
+
+// PATTERNS
+function showPat(id,el){
+  document.querySelectorAll('.pat-view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.pat-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('pv-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// DOWNLOAD
+function dlPage(){
+  var html='<!DOCTYPE html>\n'+document.documentElement.outerHTML;
+  var blob=new Blob([html],{type:'text/html'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='agentic-ai-resources-private.html';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

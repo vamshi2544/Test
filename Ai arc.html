@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agentic AI — Reference Architecture</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap');
+
+:root {
+–bg: #0a0c10;
+–surface: #111318;
+–border: #1e2330;
+–accent: #00e5ff;
+–accent2: #ff6b35;
+–accent3: #a259ff;
+–accent4: #00ff9f;
+–text: #e8eaf0;
+–muted: #5a6070;
+}
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Syne’, sans-serif;
+min-height: 100vh;
+overflow-x: hidden;
+}
+
+body::before {
+content: ‘’;
+position: fixed;
+inset: 0;
+background-image:
+linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+background-size: 40px 40px;
+pointer-events: none;
+z-index: 0;
+}
+
+.page { position: relative; z-index: 1; padding: 40px 32px 80px; max-width: 1400px; margin: 0 auto; }
+
+header { margin-bottom: 48px; }
+.tag { font-family: ‘Space Mono’, monospace; font-size: 11px; color: var(–accent); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 12px; }
+h1 { font-size: clamp(28px, 4vw, 48px); font-weight: 800; line-height: 1.1; }
+h1 span { color: var(–accent); }
+.subtitle { margin-top: 10px; color: var(–muted); font-size: 14px; font-family: ‘Space Mono’, monospace; }
+
+.section-label {
+font-family: ‘Space Mono’, monospace;
+font-size: 10px;
+letter-spacing: 3px;
+color: var(–muted);
+text-transform: uppercase;
+margin-bottom: 16px;
+margin-top: 48px;
+}
+
+.arch-diagram { display: flex; flex-direction: column; gap: 4px; }
+.layer { display: flex; gap: 4px; align-items: stretch; }
+
+.layer-label-wrap {
+writing-mode: vertical-rl;
+transform: rotate(180deg);
+display: flex;
+align-items: center;
+justify-content: center;
+width: 36px;
+min-height: 80px;
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+letter-spacing: 2px;
+color: var(–muted);
+text-transform: uppercase;
+flex-shrink: 0;
+}
+
+.layer-content { flex: 1; display: flex; gap: 4px; flex-wrap: wrap; }
+
+.comp {
+flex: 1;
+min-width: 140px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 6px;
+padding: 14px 16px;
+cursor: pointer;
+transition: all 0.25s;
+position: relative;
+overflow: hidden;
+}
+
+.comp::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+background: var(–comp-color, var(–border));
+}
+
+.comp:hover, .comp.selected {
+border-color: var(–comp-color, var(–accent));
+background: rgba(255,255,255,0.03);
+transform: translateY(-2px);
+box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.comp-name { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.comp-desc { font-size: 11px; color: var(–muted); font-family: ‘Space Mono’, monospace; line-height: 1.5; }
+.comp-tools { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 4px; }
+.tool-chip { font-size: 9px; font-family: ‘Space Mono’, monospace; padding: 2px 6px; border-radius: 2px; border: 1px solid var(–border); color: var(–muted); }
+
+.arrow-row { display: flex; align-items: center; padding: 0 40px; gap: 4px; }
+.arrow-line { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(–border), transparent); }
+.arrow-label { font-size: 10px; font-family: ‘Space Mono’, monospace; color: var(–muted); padding: 0 12px; white-space: nowrap; }
+
+.detail-panel {
+margin-top: 40px;
+background: var(–surface);
+border: 1px solid var(–border);
+border-radius: 8px;
+padding: 24px;
+display: none;
+animation: fadeIn 0.2s ease;
+}
+.detail-panel.visible { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.detail-panel h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+.detail-panel .detail-meta { font-family: ‘Space Mono’, monospace; font-size: 11px; color: var(–muted); margin-bottom: 16px; }
+.detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+.detail-item h4 { font-size: 12px; color: var(–accent); margin-bottom: 6px; font-family: ‘Space Mono’, monospace; }
+.detail-item p { font-size: 13px; color: var(–text); line-height: 1.6; }
+.detail-item ul { padding-left: 16px; }
+.detail-item ul li { font-size: 12px; color: var(–muted); line-height: 1.8; font-family: ‘Space Mono’, monospace; }
+
+.patterns-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; }
+.pattern-pill {
+padding: 6px 16px; border-radius: 4px; font-size: 12px;
+font-family: ‘Space Mono’, monospace; border: 1px solid var(–border);
+cursor: pointer; transition: all 0.2s; background: var(–surface); color: var(–muted);
+}
+.pattern-pill.active, .pattern-pill:hover { border-color: var(–accent); color: var(–accent); background: rgba(0,229,255,0.07); }
+
+.pattern-view { display: none; }
+.pattern-view.active { display: block; }
+
+.pattern-diagram { background: var(–surface); border: 1px solid var(–border); border-radius: 8px; padding: 24px; }
+.pattern-diagram h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(–accent); }
+.pattern-diagram .pat-desc { font-size: 13px; color: var(–muted); margin-bottom: 20px; font-family: ‘Space Mono’, monospace; line-height: 1.6; }
+.flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.flow-node { padding: 8px 16px; border-radius: 4px; font-size: 12px; font-family: ‘Space Mono’, monospace; border: 1px solid; white-space: nowrap; }
+.flow-arrow { color: var(–muted); font-size: 18px; }
+.fn-user  { border-color: var(–accent);  color: var(–accent);  background: rgba(0,229,255,0.05); }
+.fn-orch  { border-color: var(–accent3); color: var(–accent3); background: rgba(162,89,255,0.05); }
+.fn-agent { border-color: var(–accent2); color: var(–accent2); background: rgba(255,107,53,0.05); }
+.fn-tool  { border-color: var(–accent4); color: var(–accent4); background: rgba(0,255,159,0.05); }
+.fn-llm   { border-color: var(–accent);  color: var(–accent);  background: rgba(0,229,255,0.05); }
+.pat-framework { font-size: 11px; font-family: ‘Space Mono’, monospace; color: #3a7bd5; margin-top: 12px; }
+
+/* ROADMAP */
+.roadmap-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+gap: 2px;
+margin-top: 8px;
+}
+
+.roadmap-card {
+background: var(–surface);
+border: 1px solid var(–border);
+padding: 20px;
+position: relative;
+overflow: hidden;
+transition: border-color 0.2s;
+}
+.roadmap-card:hover { border-color: #2e3545; }
+.roadmap-card::before {
+content: ‘’;
+position: absolute;
+top: 0; left: 0; right: 0;
+height: 2px;
+background: var(–level-color, var(–border));
+}
+
+.level-badge {
+font-family: ‘Space Mono’, monospace;
+font-size: 9px;
+letter-spacing: 2px;
+color: var(–level-color, var(–muted));
+text-transform: uppercase;
+margin-bottom: 8px;
+}
+
+.roadmap-card h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.card-desc { font-size: 11px; font-family: ‘Space Mono’, monospace; color: var(–muted); margin-bottom: 14px; line-height: 1.5; }
+.topics-label { font-family: ‘Space Mono’, monospace; font-size: 9px; letter-spacing: 2px; color: var(–muted); text-transform: uppercase; margin-bottom: 8px; }
+
+.roadmap-topics { list-style: none; }
+.roadmap-topics li {
+font-size: 11px;
+font-family: ‘Space Mono’, monospace;
+color: #3a4055;
+padding: 4px 0;
+display: flex;
+align-items: flex-start;
+gap: 8px;
+border-bottom: 1px solid #13161f;
+line-height: 1.4;
+}
+.roadmap-topics li::before { content: ‘→’; color: #2a3040; flex-shrink: 0; }
+
+.prereq-tag {
+display: inline-block;
+margin-top: 12px;
+font-size: 9px;
+font-family: ‘Space Mono’, monospace;
+padding: 3px 8px;
+border-radius: 3px;
+border: 1px solid var(–border);
+color: var(–muted);
+}
+</style>
+
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <div class="tag">// Reference Architecture</div>
+    <h1>Agentic AI &amp; <span>Multi-Agent Systems</span></h1>
+    <div class="subtitle">Complete component map · architecture patterns · learning roadmap</div>
+  </header>
+
+  <!-- ARCHITECTURE DIAGRAM -->
+
+  <div class="section-label">// Core Architecture — Click any component for a detailed breakdown</div>
+
+  <div class="arch-diagram">
+
+```
+<div class="layer">
+  <div class="layer-label-wrap">Trigger</div>
+  <div class="layer-content">
+    <div class="comp" style="--comp-color:#00e5ff" data-id="user" onclick="showDetail('user')">
+      <div class="comp-name">User / External Trigger</div>
+      <div class="comp-desc">Chat input · REST API call · Webhook · Scheduled cron · Event stream</div>
+      <div class="comp-tools"><span class="tool-chip">HTTP</span><span class="tool-chip">WebSocket</span><span class="tool-chip">Kafka</span><span class="tool-chip">Cron</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row"><div class="arrow-line"></div><div class="arrow-label">↓ goal / task input</div><div class="arrow-line"></div></div>
+
+<div class="layer">
+  <div class="layer-label-wrap">Orchestrator</div>
+  <div class="layer-content">
+    <div class="comp" style="--comp-color:#a259ff" data-id="orchestrator" onclick="showDetail('orchestrator')">
+      <div class="comp-name">Orchestrator / Planner</div>
+      <div class="comp-desc">Receives goal → decomposes into tasks → routes to agents → synthesizes final output</div>
+      <div class="comp-tools"><span class="tool-chip">LangGraph</span><span class="tool-chip">CrewAI</span><span class="tool-chip">AutoGen</span><span class="tool-chip">n8n</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#a259ff" data-id="llm" onclick="showDetail('llm')">
+      <div class="comp-name">LLM Brain</div>
+      <div class="comp-desc">The reasoning engine. Not a tool — it IS the agent intelligence behind every decision</div>
+      <div class="comp-tools"><span class="tool-chip">GPT-4o</span><span class="tool-chip">Claude 3.5</span><span class="tool-chip">Gemini</span><span class="tool-chip">LLaMA 3</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row"><div class="arrow-line"></div><div class="arrow-label">↓ task dispatch to agents</div><div class="arrow-line"></div></div>
+
+<div class="layer">
+  <div class="layer-label-wrap">Agents</div>
+  <div class="layer-content">
+    <div class="comp" style="--comp-color:#ff6b35" data-id="react" onclick="showDetail('react')">
+      <div class="comp-name">ReAct Agent</div>
+      <div class="comp-desc">Reason → Act → Observe loop. The atomic unit. Every agent system starts here.</div>
+      <div class="comp-tools"><span class="tool-chip">LangChain</span><span class="tool-chip">LangGraph</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#ff6b35" data-id="specialized" onclick="showDetail('specialized')">
+      <div class="comp-name">Specialized Sub-Agents</div>
+      <div class="comp-desc">Role-based agents: Researcher, Coder, Critic, Executor. Each has own tools + context</div>
+      <div class="comp-tools"><span class="tool-chip">CrewAI</span><span class="tool-chip">AutoGen</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#ff6b35" data-id="router" onclick="showDetail('router')">
+      <div class="comp-name">Router Agent</div>
+      <div class="comp-desc">Classifies intent and routes to the right specialist. LLM-powered routing logic</div>
+      <div class="comp-tools"><span class="tool-chip">LangGraph edges</span><span class="tool-chip">Classifier</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row"><div class="arrow-line"></div><div class="arrow-label">↓ tool calls · data reads · actions</div><div class="arrow-line"></div></div>
+
+<div class="layer">
+  <div class="layer-label-wrap">Tools + Memory</div>
+  <div class="layer-content">
+    <div class="comp" style="--comp-color:#00ff9f" data-id="tools" onclick="showDetail('tools')">
+      <div class="comp-name">Tool Layer</div>
+      <div class="comp-desc">External capabilities agents invoke: APIs, web search, code exec, DB queries, file I/O</div>
+      <div class="comp-tools"><span class="tool-chip">Function Calling</span><span class="tool-chip">MCP</span><span class="tool-chip">REST</span><span class="tool-chip">SQL</span><span class="tool-chip">Browser</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#ffcc00" data-id="memory" onclick="showDetail('memory')">
+      <div class="comp-name">Memory System</div>
+      <div class="comp-desc">Short-term (in-context), long-term (vector DB), entity memory. Cross-session context</div>
+      <div class="comp-tools"><span class="tool-chip">Pinecone</span><span class="tool-chip">ChromaDB</span><span class="tool-chip">pgvector</span><span class="tool-chip">Redis</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#ffcc00" data-id="rag" onclick="showDetail('rag')">
+      <div class="comp-name">RAG Pipeline</div>
+      <div class="comp-desc">Retrieval-Augmented Generation. Agent pulls relevant knowledge before answering</div>
+      <div class="comp-tools"><span class="tool-chip">Embeddings</span><span class="tool-chip">Vector Search</span><span class="tool-chip">Chunking</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow-row"><div class="arrow-line"></div><div class="arrow-label">↓ results flow back · state updated</div><div class="arrow-line"></div></div>
+
+<div class="layer">
+  <div class="layer-label-wrap">Infra</div>
+  <div class="layer-content">
+    <div class="comp" style="--comp-color:#3a7bd5" data-id="state" onclick="showDetail('state')">
+      <div class="comp-name">State Management</div>
+      <div class="comp-desc">Tracks task graph, agent progress, intermediate results across all steps and branches</div>
+      <div class="comp-tools"><span class="tool-chip">LangGraph State</span><span class="tool-chip">Redis</span><span class="tool-chip">Postgres</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#3a7bd5" data-id="guardrails" onclick="showDetail('guardrails')">
+      <div class="comp-name">Guardrails + Safety</div>
+      <div class="comp-desc">Input/output validation, hallucination checks, PII filtering, policy enforcement</div>
+      <div class="comp-tools"><span class="tool-chip">Guardrails AI</span><span class="tool-chip">NeMo</span><span class="tool-chip">Custom filters</span></div>
+    </div>
+    <div class="comp" style="--comp-color:#3a7bd5" data-id="observability" onclick="showDetail('observability')">
+      <div class="comp-name">Observability</div>
+      <div class="comp-desc">Trace every agent step, token usage, latency, cost, errors — like Splunk for agent runs</div>
+      <div class="comp-tools"><span class="tool-chip">LangSmith</span><span class="tool-chip">Langfuse</span><span class="tool-chip">OpenTelemetry</span></div>
+    </div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- DETAIL PANEL -->
+
+  <div class="detail-panel" id="detailPanel">
+    <h3 id="dp-title"></h3>
+    <div class="detail-meta" id="dp-meta"></div>
+    <div class="detail-grid" id="dp-grid"></div>
+  </div>
+
+  <!-- AGENT PATTERNS -->
+
+  <div class="section-label">// Agent Patterns — Pick based on your use case complexity</div>
+
+  <div class="patterns-row">
+    <div class="pattern-pill active" onclick="showPattern('single', this)">Single Agent (ReAct)</div>
+    <div class="pattern-pill" onclick="showPattern('sequential', this)">Sequential Pipeline</div>
+    <div class="pattern-pill" onclick="showPattern('parallel', this)">Parallel Fan-out</div>
+    <div class="pattern-pill" onclick="showPattern('supervisor', this)">Supervisor–Worker</div>
+    <div class="pattern-pill" onclick="showPattern('debate', this)">Reflection / Debate</div>
+  </div>
+
+  <div>
+    <div class="pattern-view active" id="pat-single">
+      <div class="pattern-diagram">
+        <h3>Single ReAct Agent</h3>
+        <p class="pat-desc">One LLM. Iterative think → act → observe loop. This is where everyone starts. Build this before touching multi-agent.</p>
+        <div class="flow-row">
+          <div class="flow-node fn-user">User Goal</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-llm">LLM Reasons</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-tool">Tool Call</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-llm">LLM Observes</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-tool">Tool Call</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node fn-user">Final Answer</div>
+        </div>
+        <div class="pat-framework">Frameworks: LangChain AgentExecutor · LangGraph single node · raw function calling via API</div>
+      </div>
+    </div>
+
+```
+<div class="pattern-view" id="pat-sequential">
+  <div class="pattern-diagram">
+    <h3>Sequential Pipeline</h3>
+    <p class="pat-desc">Output of Agent A becomes input of Agent B. Like a data pipeline — each stage is a specialized LLM agent.</p>
+    <div class="flow-row">
+      <div class="flow-node fn-user">Input</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Researcher Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Analyst Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Writer Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-user">Final Report</div>
+    </div>
+    <div class="pat-framework">Frameworks: CrewAI sequential crew · n8n workflow chains · LangGraph linear graph</div>
+  </div>
+</div>
+
+<div class="pattern-view" id="pat-parallel">
+  <div class="pattern-diagram">
+    <h3>Parallel Fan-out / Fan-in</h3>
+    <p class="pat-desc">Orchestrator dispatches to multiple agents simultaneously then aggregates results. Reduces total latency significantly.</p>
+    <div class="flow-row">
+      <div class="flow-node fn-orch">Orchestrator</div>
+      <div class="flow-arrow">→</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="flow-node fn-agent">Agent A — Finance</div>
+        <div class="flow-node fn-agent">Agent B — Legal</div>
+        <div class="flow-node fn-agent">Agent C — Tech</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-orch">Aggregator</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-user">Merged Output</div>
+    </div>
+    <div class="pat-framework">Frameworks: LangGraph parallel nodes · AutoGen GroupChat · CrewAI concurrent tasks</div>
+  </div>
+</div>
+
+<div class="pattern-view" id="pat-supervisor">
+  <div class="pattern-diagram">
+    <h3>Supervisor–Worker (Hierarchical)</h3>
+    <p class="pat-desc">Supervisor plans and delegates. Workers execute. Supervisor evaluates and re-routes if needed. Most common production pattern.</p>
+    <div class="flow-row">
+      <div class="flow-node fn-user">Goal</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-orch">Supervisor LLM</div>
+      <div class="flow-arrow">⇄</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div class="flow-node fn-agent">Coder Worker</div>
+        <div class="flow-node fn-agent">QA Worker</div>
+        <div class="flow-node fn-agent">Docs Worker</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-user">Deliverable</div>
+    </div>
+    <div class="pat-framework">Frameworks: CrewAI hierarchical process · LangGraph supervisor pattern · AutoGen nested chats</div>
+  </div>
+</div>
+
+<div class="pattern-view" id="pat-debate">
+  <div class="pattern-diagram">
+    <h3>Reflection / Agent Debate (Critic Pattern)</h3>
+    <p class="pat-desc">Multiple agents critique each other's outputs in a loop. Reduces hallucinations and improves quality for high-stakes tasks.</p>
+    <div class="flow-row">
+      <div class="flow-node fn-agent">Generator Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Critic Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Refiner Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-agent">Critic Agent</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-node fn-user">Final Output</div>
+    </div>
+    <div class="pat-framework">Frameworks: AutoGen AssistantAgent + CriticAgent · LangGraph reflection loops · self-reflection prompting</div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- LEARNING ROADMAP -->
+
+  <div class="section-label">// Learning Roadmap — End to end from zero to production agents</div>
+
+  <div class="roadmap-grid">
+
+```
+<div class="roadmap-card" style="--level-color:#4a5568">
+  <div class="level-badge">Level 0</div>
+  <h4>Foundations</h4>
+  <div class="card-desc">What you need to understand before writing any agent code</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>How LLMs work — tokens, context window, temperature</li>
+    <li>What is a prompt? System vs user vs assistant roles</li>
+    <li>Calling AI APIs — OpenAI, Anthropic (Claude)</li>
+    <li>JSON, environment variables, .env files</li>
+    <li>Git basics — clone, commit, push</li>
+  </ul>
+</div>
+
+<div class="roadmap-card" style="--level-color:#3a7bd5">
+  <div class="level-badge">Level 1</div>
+  <h4>Python for AI</h4>
+  <div class="card-desc">Just enough Python to build AI pipelines — not a full Python course</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Variables, loops, functions, dicts, lists</li>
+    <li>Installing packages with pip, virtual environments</li>
+    <li>Making API calls with requests / httpx</li>
+    <li>Reading and writing files, parsing JSON</li>
+    <li>Async / await basics — needed for agent frameworks</li>
+    <li>Using .env with python-dotenv</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 0</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#00b4d8">
+  <div class="level-badge">Level 2</div>
+  <h4>Prompt Engineering</h4>
+  <div class="card-desc">The skill that connects your intent to model behavior — critical before agents</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Zero-shot, few-shot, chain-of-thought prompting</li>
+    <li>System prompts — persona, constraints, output format</li>
+    <li>Structured output — JSON mode, XML tags</li>
+    <li>Prompt templates with variables</li>
+    <li>Iterative prompt debugging and testing</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 1</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#a259ff">
+  <div class="level-badge">Level 3</div>
+  <h4>RAG — Retrieval-Augmented Generation</h4>
+  <div class="card-desc">Give your LLM access to your own knowledge. Foundation for agent memory.</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>What are embeddings and vector databases</li>
+    <li>Document ingestion — load, chunk, embed, store</li>
+    <li>Semantic search — query → retrieve → inject into prompt</li>
+    <li>ChromaDB / Pinecone hands-on</li>
+    <li>Build a Q&amp;A bot over your own documents</li>
+    <li>Hybrid search — keyword + semantic combined</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 2</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#ff6b35">
+  <div class="level-badge">Level 4</div>
+  <h4>Single Agent — ReAct</h4>
+  <div class="card-desc">Build your first real agent. One LLM, tools it can call, iterative reasoning loop.</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Agent vs chatbot vs chain — what is the difference</li>
+    <li>Tool / function calling — define, register, invoke</li>
+    <li>ReAct loop — Reason, Act, Observe, repeat</li>
+    <li>Build agent with LangChain AgentExecutor</li>
+    <li>Add memory — short-term conversation history</li>
+    <li>Intro to LangGraph — nodes, edges, state</li>
+    <li>Debugging and tracing with LangSmith</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 3</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#ff6b35">
+  <div class="level-badge">Level 5</div>
+  <h4>Multi-Agent Systems</h4>
+  <div class="card-desc">Multiple agents collaborating, each with a role. This is the real power of agentic AI.</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Agent roles — Planner, Executor, Critic, Router</li>
+    <li>Sequential pipeline pattern</li>
+    <li>Supervisor–Worker pattern with LangGraph</li>
+    <li>Parallel fan-out / fan-in</li>
+    <li>CrewAI — define crew, roles, tasks</li>
+    <li>AutoGen — conversational multi-agent</li>
+    <li>Agent communication — shared state, message passing</li>
+    <li>Routing logic — how agents hand off to each other</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 4</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#00ff9f">
+  <div class="level-badge">Level 6</div>
+  <h4>Production-Ready Agents</h4>
+  <div class="card-desc">Take agents from prototype to deployable, observable, and safe systems.</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Guardrails — input validation, output schema enforcement</li>
+    <li>PII detection and masking</li>
+    <li>Hallucination detection — LLM-as-judge pattern</li>
+    <li>Full observability with LangSmith / Langfuse</li>
+    <li>Token cost tracking and budget limits</li>
+    <li>Error handling, retries, fallback strategies</li>
+    <li>Containerize and deploy — Docker + cloud</li>
+    <li>Evaluation — how to test and benchmark your agent</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 5</div>
+</div>
+
+<div class="roadmap-card" style="--level-color:#ffcc00">
+  <div class="level-badge">Level 7</div>
+  <h4>Build Something Real</h4>
+  <div class="card-desc">Apply everything end-to-end by building a real agentic product from scratch.</div>
+  <div class="topics-label">Topics</div>
+  <ul class="roadmap-topics">
+    <li>Pick a problem domain — internal tool, SaaS, automation</li>
+    <li>Design the agent architecture from scratch</li>
+    <li>Choose the right pattern for your use case</li>
+    <li>Integrate with real data sources and APIs</li>
+    <li>Add human-in-the-loop checkpoints</li>
+    <li>Deploy, monitor, iterate on real usage</li>
+  </ul>
+  <div class="prereq-tag">Prereq → Level 6</div>
+</div>
+```
+
+  </div>
+
+</div>
+
+<script>
+const details = {
+  user: {
+    title: "User / External Trigger",
+    meta: "Layer: Input  ·  Analogy: The REST client calling your API gateway",
+    items: [
+      { h: "What it is", p: "The entry point to any agent system. Provides the goal or task in natural language or structured form." },
+      { h: "Trigger types", ul: ["Chat or UI (like Claude.ai, custom frontend)", "REST API call from another service", "Webhook from an external system", "Scheduled cron job", "Event from Kafka or RabbitMQ"] },
+      { h: "Your parallel", p: "Same as a client calling your Spring Boot API — except instead of a JSON action payload, it sends a natural language goal." }
+    ]
+  },
+  orchestrator: {
+    title: "Orchestrator / Planner",
+    meta: "Layer: Control  ·  Analogy: API Gateway + BPM workflow engine combined",
+    items: [
+      { h: "What it does", p: "Receives the high-level goal, breaks it into subtasks, decides which agent handles each, and stitches the final output together." },
+      { h: "Key responsibilities", ul: ["Task decomposition — break goal into steps", "Agent selection and routing", "Result aggregation", "Error handling and retries", "Loop control — deciding when the task is done"] },
+      { h: "Your parallel", p: "Think Apigee gateway + a BPM engine. It decides routing, sequence, and orchestration of downstream services — except the services are AI agents." },
+      { h: "Frameworks", p: "LangGraph (best for complex conditional flows), CrewAI (role-based), AutoGen (conversational multi-agent), n8n (visual low-code)." }
+    ]
+  },
+  llm: {
+    title: "LLM — The Brain",
+    meta: "Layer: Intelligence  ·  Analogy: The Java runtime — everything runs through it",
+    items: [
+      { h: "What it is", p: "The large language model is the reasoning, planning, decision-making, and generation engine. Not just a chatbot — it IS the agent intelligence." },
+      { h: "What it decides", ul: ["Which tool to call next", "Whether the task is complete", "How to format the output", "When to ask for clarification", "How to recover from an error"] },
+      { h: "Model choices", ul: ["GPT-4o — best tool use support, widely adopted", "Claude 3.5 Sonnet — long context, strong reasoning", "Gemini 1.5 — multimodal, Google ecosystem", "LLaMA 3 — open source, self-hostable"] },
+      { h: "Key insight", p: "You swap the LLM like a database driver. The agent framework is your app layer; the LLM is the engine underneath. Same code, different model." }
+    ]
+  },
+  react: {
+    title: "ReAct Agent",
+    meta: "Pattern: Reason + Act  ·  The atomic unit — build this first",
+    items: [
+      { h: "The loop", p: "Think (reason about what to do) → Act (call a tool) → Observe (read the result) → Think again → repeat until goal is reached." },
+      { h: "Why it matters", p: "Every complex multi-agent system is built from ReAct agents. You cannot understand multi-agent without mastering this first." },
+      { h: "Example", p: "Goal: Summarize news about AI → Reason: I need to search → Act: web_search() → Observe: results → Reason: now I can summarize → Act: return summary." },
+      { h: "Where to build it", ul: ["LangChain AgentExecutor — fastest to get started", "LangGraph — more control, production-grade", "Raw function calling — Claude or OpenAI API directly"] }
+    ]
+  },
+  specialized: {
+    title: "Specialized Sub-Agents",
+    meta: "Pattern: Role-based decomposition  ·  Analogy: Microservices",
+    items: [
+      { h: "The idea", p: "Instead of one agent doing everything, give each agent a specific role, persona, and toolset. Like microservices — each does one thing well." },
+      { h: "Common roles", ul: ["Researcher — web search, document retrieval", "Coder — writes and executes code", "Critic / QA — validates and checks outputs", "Planner — decomposes complex tasks", "Executor — takes real-world actions"] },
+      { h: "Your parallel", p: "Splitting a monolith into microservices. Each agent has its own responsibility boundary, tools, and system prompt." },
+      { h: "Frameworks", p: "CrewAI has the best developer experience for role-based agents. AutoGen works well for conversational patterns." }
+    ]
+  },
+  router: {
+    title: "Router Agent",
+    meta: "Pattern: Intent classification + routing  ·  Analogy: Apigee routing rules, powered by LLM",
+    items: [
+      { h: "What it does", p: "Classifies the incoming task and routes it to the correct specialist agent or workflow branch." },
+      { h: "Example", p: "User sends a message → Router classifies: is this a code task? → CodeAgent. Data question? → AnalystAgent. General? → ReActAgent." },
+      { h: "Your parallel", p: "Identical concept to your Apigee route policies — but instead of URL patterns, it uses an LLM classification call." },
+      { h: "Implementation", p: "LangGraph conditional edges (if/else routing between graph nodes), or a lightweight classifier LLM call that runs before the main agent." }
+    ]
+  },
+  tools: {
+    title: "Tool Layer",
+    meta: "Layer: Actions  ·  Analogy: External service integrations in Spring Boot",
+    items: [
+      { h: "What tools are", p: "Functions the LLM can invoke to interact with the real world. You define the function and its description. The LLM decides when and which one to call." },
+      { h: "Tool types", ul: ["Web search (Tavily, Bing API)", "Code execution (Python REPL sandbox)", "Database queries (SQL tools)", "File read and write", "REST API calls to external services", "Browser automation (Playwright)", "Calendar, email, Slack integrations"] },
+      { h: "How it works", p: "You register tools with descriptions. The LLM reads the description and decides when to invoke them. This is called function calling or tool use." },
+      { h: "Standard: MCP", p: "Model Context Protocol by Anthropic — an emerging standard interface for connecting tools to agents. Like OpenAPI spec but for agent tools. Claude Code uses this." }
+    ]
+  },
+  memory: {
+    title: "Memory System",
+    meta: "Layer: Context  ·  Analogy: Session state + persistent database",
+    items: [
+      { h: "Types of memory", ul: ["In-context / short-term — current conversation window", "Vector / semantic / long-term — embedded in vector DB", "Entity memory — facts about specific people or things", "Episodic memory — logs of past agent run history"] },
+      { h: "Why it matters", p: "Without memory, every agent run starts from zero. Memory is what makes agents useful across sessions and over time." },
+      { h: "Tools", p: "ChromaDB and Pinecone for vector search, Redis for fast key-value, pgvector for Postgres-native storage, Mem0 for managed memory API." },
+      { h: "Connection to RAG", p: "Long-term memory IS basically RAG. You embed past interactions or documents, store in a vector DB, and retrieve relevant context per query." }
+    ]
+  },
+  rag: {
+    title: "RAG Pipeline",
+    meta: "Layer: Knowledge  ·  Retrieval-Augmented Generation",
+    items: [
+      { h: "What RAG is", p: "Before the LLM answers, retrieve relevant documents from a knowledge base and inject them into the prompt. Grounds the LLM in real, current, private data." },
+      { h: "Pipeline steps", ul: ["1. Ingest — load documents, split into chunks", "2. Embed — convert chunks to vector representations", "3. Store — save vectors in vector DB with metadata", "4. Query — embed user question, find nearest chunks", "5. Augment — inject retrieved chunks into LLM prompt", "6. Generate — LLM answers with grounded context"] },
+      { h: "How agents use RAG", p: "Agents call RAG as a tool: search_knowledge_base(query). The agent decides when to retrieve knowledge vs when to use existing context." },
+      { h: "Why it matters", p: "Without RAG, LLMs hallucinate or are limited to training data. RAG gives agents access to your private, up-to-date knowledge." }
+    ]
+  },
+  state: {
+    title: "State Management",
+    meta: "Layer: Infra  ·  Analogy: Session state + distributed task graph",
+    items: [
+      { h: "What state tracks", p: "What has been done, what is in progress, intermediate results, conversation history, agent outputs, and the current plan status." },
+      { h: "Why it gets complex", p: "Multi-agent systems have branching, parallel paths, retries, and loops. You need consistent state tracking across all nodes and steps." },
+      { h: "LangGraph approach", p: "State is a typed dictionary passed through graph nodes. Each node reads current state and writes updates back. The graph controls flow between nodes." },
+      { h: "Persistence", p: "For long-running agents: serialize state to Redis or a database between steps so the agent can survive restarts and resume from where it stopped." }
+    ]
+  },
+  guardrails: {
+    title: "Guardrails + Safety",
+    meta: "Layer: Infra  ·  Non-negotiable for any real production deployment",
+    items: [
+      { h: "What it covers", p: "Input validation (prompt injection detection), output validation (schema enforcement, hallucination checks), PII detection and masking, policy compliance." },
+      { h: "Why it matters", p: "Without guardrails, agents can take wrong actions, expose sensitive data, or return harmful outputs. This layer is mandatory for anything in production." },
+      { h: "Tools", ul: ["Guardrails AI — define output schema, validate every response", "NeMo Guardrails — conversation-level rails and topic control", "Custom filters — regex and ML classifiers for PII and policy", "LLM-as-judge — use a second LLM call to verify the first"] },
+      { h: "Architecture position", p: "Wraps every LLM call as middleware. Think of it as a filter on both the request going in and the response coming out." }
+    ]
+  },
+  observability: {
+    title: "Observability",
+    meta: "Layer: Infra  ·  Analogy: Splunk + New Relic, but for agent runs",
+    items: [
+      { h: "What to observe", ul: ["Every LLM call — prompt, response, tokens used, latency", "Tool calls — which tool, input, output, duration", "Agent decisions — which path was taken and why", "Errors and retries — where it failed and how", "Cost per run — total token spend per execution"] },
+      { h: "Tools", p: "LangSmith by LangChain team (best developer experience), Langfuse (open source alternative), OpenTelemetry with custom spans for vendor-neutral tracing." },
+      { h: "Your parallel", p: "Same as Splunk and New Relic. You trace requests through microservices. Here you trace prompts through agent graph nodes." },
+      { h: "When to add it", p: "Do not save this for last. Instrument from the beginning — debugging multi-agent runs without traces is nearly impossible." }
+    ]
+  }
+};
+
+function showDetail(id) {
+  const d = details[id];
+  if (!d) return;
+  document.querySelectorAll('.comp').forEach(c => c.classList.remove('selected'));
+  document.querySelector('[data-id="' + id + '"]').classList.add('selected');
+  document.getElementById('dp-title').textContent = d.title;
+  document.getElementById('dp-meta').textContent = d.meta;
+  const grid = document.getElementById('dp-grid');
+  grid.innerHTML = d.items.map(function(item) {
+    return '<div class="detail-item"><h4>' + item.h + '</h4>' +
+      (item.p ? '<p>' + item.p + '</p>' : '') +
+      (item.ul ? '<ul>' + item.ul.map(function(i){ return '<li>' + i + '</li>'; }).join('') + '</ul>' : '') +
+      '</div>';
+  }).join('');
+  const panel = document.getElementById('detailPanel');
+  panel.classList.add('visible');
+  setTimeout(function(){ panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+}
+
+function showPattern(id, el) {
+  document.querySelectorAll('.pattern-view').forEach(function(v){ v.classList.remove('active'); });
+  document.querySelectorAll('.pattern-pill').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('pat-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+
+</body>
+</html>

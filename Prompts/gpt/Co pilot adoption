@@ -1,0 +1,62 @@
+# Copilot Adoption Leadership Presentation — Generation Prompt
+
+Create a leadership presentation for Synchrony about a structured Copilot adoption and usage process.
+
+## Context
+The process has two parts:
+1. **How the team will adopt Copilot across the PI**
+2. **How developers will use Copilot through prompts, agents, markdown templates, and implementation guardrails**
+
+## PI Adoption Rollout
+- **Sprint 1:** Everyone explores Copilot usage across safe tasks and captures observations, friction, and opportunities.
+- **Sprint 2:** Start with **2 Copilot stories first**, review the outputs, and capture feedback.
+- **Sprint 3:** Add **one more Copilot story**, rotate developer ownership, and continue review cycles.
+- **Sprint 4 and beyond:** Gradually scale usage so each developer gets hands-on usage, review, and feedback.
+
+## Implementation Workflow
+Use a **master prompt** and **Story Implementation Agent**.
+
+The agent workflow should include:
+1. Read repository context, standards, and story details.
+2. Ask the developer for a story spec.
+3. Audit the story spec for gaps, assumptions, and ambiguity.
+4. Create an implementation plan.
+5. Developer reviews the plan and either approves, asks to iterate specific areas, rejects it, or writes their own plan.
+6. Copilot implements only after the plan is approved.
+7. Audit the implementation for issues, test gaps, risk, standards, and missed requirements.
+8. Produce final output in the exact required format.
+
+## Additional Agent
+Include a **Production Review Agent** that reviews release readiness, pulls findings and risks, and summarizes concerns before production release.
+
+## Repository Demo Path
+Include a leadership-friendly Bitbucket repo demo flow showing:
+- Repository README / landing page
+- `/agents`
+- `/templates`
+- Master prompt
+- Story implementation agent
+- Production review agent
+- Sample story flow from spec → plan → implementation → audit
+
+## Tone and Style
+- Executive, practical, engineering-led, and governance-focused
+- Synchrony-inspired gold, charcoal, and white styling
+- Avoid hype or generic AI language
+- Emphasize controlled acceleration, human approval gates, developer accountability, reviewability, and measurable adoption
+
+## Required Slides
+1. Title
+2. Why this matters
+3. Two-part operating model
+4. PI rollout timeline
+5. Story implementation agent workflow
+6. Human-in-the-loop controls
+7. Story spec as developer handshake
+8. Production review agent
+9. Repository demo path
+10. Adoption metrics
+11. Leadership ask
+12. Appendix / copy-ready prompt
+
+Create a polished PowerPoint-style deck with concise visuals and speaker notes.
